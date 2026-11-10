@@ -1,0 +1,15 @@
+Copy the contents of these folders over your project (node_modules, .env and .git are not included, so yours stay untouched):
+
+  backend\   ->  F:\Event Management\Backend\backend
+  frontend\  ->  F:\Event Management\Frontend
+
+Then delete the leftovers that should not exist:
+  F:\Event Management\Backend\backend\backend      (old duplicate folder)
+  F:\Event Management\Backend\package.json, package-lock.json, .env   (stale root files)
+
+Run (two terminals):
+  cd "F:\Event Management\Backend\backend"   &&  npm run dev
+  cd "F:\Event Management\Frontend"          &&  npm run dev
+
+Check first:  http://localhost:5000/api/health   must show {"ok":true,...}
+Then open the address Vite prints (http://localhost:5173).
