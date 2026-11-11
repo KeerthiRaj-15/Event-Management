@@ -2,12 +2,13 @@ import React, { useEffect, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, CalendarDays, Ticket, Plus, Search, QrCode, BarChart3,
-  ShieldCheck, UserCircle, LogOut, Menu, CalendarCheck,
+  ShieldCheck, UserCircle, LogOut, Menu, CalendarCheck, Moon, Sun,
 } from "lucide-react";
 import { useAuth } from "../auth/AuthContext.jsx";
 import { initials } from "../pages/events/helpers.js";
 import "../pages/events/events.css";
 import "./workspace.css";
+import EventAssistant from "./EventAssistant.jsx";
 
 // Sidebar items per role. Pages stay reachable only if ProtectedRoute in AppRouter allows the role too.
 function navFor(role) {
@@ -51,6 +52,11 @@ export default function PageLayout({ children }) {
   // Go to /login first so the next person to sign in is not sent back to this (possibly forbidden) page.
   const signOut = () => { navigate("/login", { replace: true }); logout(); };
   const [open, setOpen] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem("gather.theme") === "dark");
+  useEffect(() => {
+    document.documentElement.dataset.theme = darkMode ? "dark" : "light";
+    localStorage.setItem("gather.theme", darkMode ? "dark" : "light");
+  }, [darkMode]);
   useEffect(() => setOpen(false), [pathname]);
   const crumb = (CRUMBS.find(([re]) => re.test(pathname)) || [null, "Gather"])[1];
 
@@ -62,7 +68,6 @@ export default function PageLayout({ children }) {
           <span>gather<span className="brand-dot">.</span></span>
         </div>
 
-        <p className="nav-caption">WORKSPACE</p>
         <nav aria-label="Main" className="ws-nav">
           {navFor(user.role).map(({ to, label, icon: Icon, end }) => (
             <NavLink key={to} to={to} end={end} className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}>
@@ -90,13 +95,20 @@ export default function PageLayout({ children }) {
           <button className="mobile-menu" onClick={() => setOpen(true)} aria-label="Open navigation"><Menu size={21} /></button>
           <div className="breadcrumb">Workspace <span>/</span> <strong>{crumb}</strong></div>
           <div className="top-actions">
+            <button type="button" className="theme-toggle" onClick={() => setDarkMode((value) => !value)}
+              aria-label={darkMode ? "Switch to light mode" : "Switch to night mode"}
+              title={darkMode ? "Switch to light mode" : "Switch to night mode"}>
+              {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+              <span>{darkMode ? "Light mode" : "Night mode"}</span>
+            </button>
             <Link to="/profile" className="top-avatar" aria-label="My profile">{initials(user.name)}</Link>
           </div>
         </header>
         <div className="content">
-          <div className="ev-main ws-body">{children}</div>
+          <div key={pathname} className="ev-main ws-body page-in">{children}</div>
         </div>
       </main>
+      <EventAssistant />
     </div>
   );
 }

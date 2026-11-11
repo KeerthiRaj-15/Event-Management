@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import PageLayout from "../../components/PageLayout.jsx";
+import Skeleton from "../../components/Skeleton.jsx";
 import { useAuth } from "../../auth/AuthContext.jsx";
 import { listManagedEvents, setEventStatus, deleteEvent } from "../../api";
 import { isPast } from "../../validation.js";
@@ -45,7 +46,7 @@ export default function MyEvents() {
 
       {note && <p className="ev-ok" role="status">{note}</p>}
       {error && <p className="ev-error" role="alert">{error}</p>}
-      {!events && !error && <p className="ev-muted">Loading...</p>}
+      {!events && !error && <Skeleton />}
       {events && rows.length === 0 && (
         <div className="ws-panel ws-empty"><h3>No events here yet</h3><p>Create your first event to start selling tickets.</p><Link className="ev-btn" to="/events/new">Create event</Link></div>
       )}

@@ -156,6 +156,12 @@ const token = () => { try { return JSON.parse(localStorage.getItem(SESSION_KEY))
 
 const authed = (method, path, body) => request(method, path, body, true);
 
+export async function chatWithAssistant(message) {
+  if (MOCK) throw fail("The AI assistant needs the real backend. Set VITE_USE_MOCK=false in frontend/.env, then sign in using a backend account.", "MOCK_MODE");
+  return authed("POST", "/ai/chat", { message });
+}
+
+
 const ymd = (daysFromNow) => {
   const d = new Date();
   d.setDate(d.getDate() + daysFromNow);

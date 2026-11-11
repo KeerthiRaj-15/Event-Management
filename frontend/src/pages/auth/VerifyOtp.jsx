@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { verifyOtp, resendOtp } from "../../api";
 import "./Registration.css";
+import AuthStage from "../../components/AuthStage.jsx";
 
 export default function VerifyOtp() {
   const navigate = useNavigate();
@@ -49,6 +50,7 @@ export default function VerifyOtp() {
 
   return (
     <div className="register-page">
+      <AuthStage />
       <div className="register-card">
         <div className="register-brand">
           <div className="register-logo">G</div>

@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import PageLayout from "../../components/PageLayout.jsx";
+import CountUp from "../../components/CountUp.jsx";
+import Skeleton from "../../components/Skeleton.jsx";
 import { useAuth } from "../../auth/AuthContext.jsx";
 import { listManagedEvents, listManagedBookings, listCheckIns } from "../../api";
 import { localDate } from "../../validation.js";
@@ -127,7 +129,7 @@ export default function Reports() {
   }, [data, range]);
 
   if (error) return <PageLayout><p className="ev-error">{error}</p></PageLayout>;
-  if (!r) return <PageLayout><p className="ev-muted">Loading...</p></PageLayout>;
+  if (!r) return <PageLayout><Skeleton /></PageLayout>;
 
   const exportCsv = () => downloadCsv(`event-report-${rangeKey}.csv`, [
     ["Report range", range.label],
@@ -163,12 +165,12 @@ export default function Reports() {
           <p className="ev-muted" style={{ margin: "8px 0 0" }}>Revenue, tickets and refunds are for <strong>{range.label.toLowerCase()}</strong> (by booking date). Seats filled and check-ins are all-time.</p>
 
           <div className="ws-stats" style={{ marginTop: 14 }}>
-            <div className="ws-stat"><p>Revenue</p><strong>{inr(r.revenue)}</strong><span>{r.orders} paid booking{r.orders === 1 ? "" : "s"}</span></div>
-            <div className="ws-stat"><p>Tickets booked</p><strong>{r.tickets}</strong><span>{r.pending} awaiting payment (now)</span></div>
-            <div className="ws-stat"><p>Average booking</p><strong>{inr(r.avgOrder)}</strong><span>Per paid booking</span></div>
-            <div className="ws-stat"><p>Refunded</p><strong>{inr(r.refunded)}</strong><span>{r.cancelled} cancelled booking{r.cancelled === 1 ? "" : "s"}</span></div>
-            <div className="ws-stat"><p>Seats filled</p><strong>{r.fill}%</strong><span>All events, all time</span></div>
-            <div className="ws-stat"><p>Attendance</p><strong>{r.attendance}%</strong><span>{r.checked} checked in</span></div>
+            <div className="ws-stat"><p>Revenue</p><strong><CountUp>{inr(r.revenue)}</CountUp></strong><span>{r.orders} paid booking{r.orders === 1 ? "" : "s"}</span></div>
+            <div className="ws-stat"><p>Tickets booked</p><strong><CountUp>{r.tickets}</CountUp></strong><span>{r.pending} awaiting payment (now)</span></div>
+            <div className="ws-stat"><p>Average booking</p><strong><CountUp>{inr(r.avgOrder)}</CountUp></strong><span>Per paid booking</span></div>
+            <div className="ws-stat"><p>Refunded</p><strong><CountUp>{inr(r.refunded)}</CountUp></strong><span>{r.cancelled} cancelled booking{r.cancelled === 1 ? "" : "s"}</span></div>
+            <div className="ws-stat"><p>Seats filled</p><strong><CountUp>{r.fill}%</CountUp></strong><span>All events, all time</span></div>
+            <div className="ws-stat"><p>Attendance</p><strong><CountUp>{r.attendance}%</CountUp></strong><span>{r.checked} checked in</span></div>
           </div>
 
           <div className="ws-grid2">

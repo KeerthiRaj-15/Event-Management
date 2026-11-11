@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { forgotPassword, resetPassword } from "../../api";
 import { validatePasswordChange, RESET_OTP_MINUTES } from "../../validation.js";
 import "./Registration.css";
+import AuthStage from "../../components/AuthStage.jsx";
 
 // Step 1: enter email -> code is sent. Step 2: enter code + new password.
 export default function ForgotPassword() {
@@ -58,6 +59,7 @@ export default function ForgotPassword() {
 
   return (
     <div className="register-page">
+      <AuthStage />
       <div className="register-card">
         <div className="register-brand">
           <div className="register-logo">G</div>

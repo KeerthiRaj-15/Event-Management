@@ -3,6 +3,7 @@ import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { login } from "../../api";
 import { useAuth } from "../../auth/AuthContext.jsx";
 import "./Registration.css";
+import AuthStage from "../../components/AuthStage.jsx";
 
 export default function Login() {
   const { user, signIn } = useAuth();
@@ -37,6 +38,7 @@ export default function Login() {
 
   return (
     <div className="register-page">
+      <AuthStage />
       <div className="register-card">
         <div className="register-brand">
           <div className="register-logo">G</div>

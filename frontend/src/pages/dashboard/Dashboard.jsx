@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import PageLayout from "../../components/PageLayout.jsx";
+import CountUp from "../../components/CountUp.jsx";
+import Skeleton from "../../components/Skeleton.jsx";
 import { useAuth } from "../../auth/AuthContext.jsx";
 import { listEvents, listBookings, listManagedEvents, listManagedBookings } from "../../api";
 import { isPast } from "../../validation.js";
 import { money, inr, eventChip, bookingChip, fmtDate, fmtTime, greeting, seatsLeft } from "../events/helpers.js";
 
 function Stat({ label, value, note }) {
-  return <div className="ws-stat"><p>{label}</p><strong>{value}</strong>{note && <span>{note}</span>}</div>;
+  return <div className="ws-stat"><p>{label}</p><strong><CountUp>{value}</CountUp></strong>{note && <span>{note}</span>}</div>;
 }
 
 // Role-based landing page. Admins have their own dashboard at /admin.
@@ -34,7 +36,7 @@ function AttendeeHome({ user }) {
   }, [user]);
 
   if (error) return <PageLayout><p className="ev-error">{error}</p></PageLayout>;
-  if (!data) return <PageLayout><p className="ev-muted">Loading...</p></PageLayout>;
+  if (!data) return <PageLayout><Skeleton /></PageLayout>;
 
   const confirmed = data.b.filter((b) => b.status === "CONFIRMED");
   const upcoming = confirmed.filter((b) => !isPast({ date: b.eventDate, time: b.eventTime })).sort((a, b) => `${a.eventDate}${a.eventTime}`.localeCompare(`${b.eventDate}${b.eventTime}`));
@@ -98,7 +100,7 @@ function OrganizerHome({ user }) {
   }, [user]);
 
   if (error) return <PageLayout><p className="ev-error">{error}</p></PageLayout>;
-  if (!data) return <PageLayout><p className="ev-muted">Loading...</p></PageLayout>;
+  if (!data) return <PageLayout><Skeleton /></PageLayout>;
 
   const paid = data.b.filter((b) => b.status === "CONFIRMED");
   const upcoming = data.e.filter((e) => !isPast(e) && e.status !== "Cancelled").sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`));

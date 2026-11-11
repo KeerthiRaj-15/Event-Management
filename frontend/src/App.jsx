@@ -1,11 +1,12 @@
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Registration from "./Registration";
+import Login from "./Login";
 import React, { useMemo, useState } from 'react';
 import {
   LayoutDashboard, CalendarDays, Ticket, Users, Settings, Search, Plus,
   Bell, ChevronDown, MapPin, Clock3, ArrowUpRight, MoreHorizontal,
-  CalendarPlus, QrCode, Menu, X, CheckCircle2, Sparkles, LogOut
+  CalendarPlus, QrCode, Menu, X, CheckCircle2, Sparkles
 } from 'lucide-react';
-import { useAuth } from './auth/AuthContext.jsx';
-import { useNavigate } from 'react-router-dom';
 
 const initialEvents = [
   {
@@ -69,9 +70,6 @@ const dateLabel = value =>
   });
 
 function App() {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
-  const initials = user.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
   const [events, setEvents] = useState(() => { try { return JSON.parse(localStorage.getItem('gather.events')) || initialEvents; } catch { return initialEvents; } });
   const [registrations, setRegistrations] = useState(() => { try { return JSON.parse(localStorage.getItem('gather.registrations')) || []; } catch { return []; } });
   const [active, setActive] = useState('Overview');
@@ -172,10 +170,8 @@ function App() {
     { label: 'My events', icon: CalendarDays },
     { label: 'Registrations', icon: Users },
     { label: 'Register attendee', icon: CalendarPlus },
-    { label: 'Tickets', icon: Ticket },
-    { label: 'Browse events', icon: Search, to: '/events' },
-    { label: 'My tickets', icon: QrCode, to: '/tickets' }
-  ].filter(item => user.role !== 'Attendee' || ['Overview', 'Browse events', 'My tickets'].includes(item.label));
+    { label: 'Tickets', icon: Ticket }
+  ];
 
   return (
     <div className="app-shell">
@@ -203,12 +199,11 @@ function App() {
         <p className="nav-caption">WORKSPACE</p>
 
         <nav>
-          {navItems.map(({ label, icon: Icon, to }) => (
+          {navItems.map(({ label, icon: Icon }) => (
             <button
               key={label}
               className={`nav-link ${active === label ? 'active' : ''}`}
               onClick={() => {
-                if (to) return navigate(to);
                 setActive(label);
                 setMobileNav(false);
               }}
@@ -254,14 +249,12 @@ function App() {
           </div>
 
           <div className="profile">
-            <div className="profile-avatar">{initials}</div>
+            <div className="profile-avatar">KR</div>
             <div>
-              <strong>{user.name}</strong>
-              <small>{user.role}</small>
+              <strong>Keerthi Raj</strong>
+              <small>Event organizer</small>
             </div>
-            <button className="logout-btn" onClick={logout} title="Log out" aria-label="Log out">
-              <LogOut size={18} />
-            </button>
+            <MoreHorizontal size={18} />
           </div>
 
         </div>
@@ -309,7 +302,7 @@ function App() {
               <i />
             </button>
 
-            <div className="top-avatar">{initials}</div>
+            <div className="top-avatar">KR</div>
 
           </div>
         </header>

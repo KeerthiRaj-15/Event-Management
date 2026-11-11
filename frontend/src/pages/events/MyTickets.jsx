@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import PageLayout from "../../components/PageLayout.jsx";
+import Skeleton from "../../components/Skeleton.jsx";
 import { useAuth } from "../../auth/AuthContext.jsx";
 import { listBookings, cancelBooking } from "../../api";
 import { cancelCheck, CANCEL_CUTOFF_HOURS } from "../../validation.js";
@@ -40,7 +41,7 @@ export default function MyTickets() {
       </div>
       {note && <p className="ev-ok" role="status">{note}</p>}
       {error && <p className="ev-error" role="alert">{error}</p>}
-      {!items && !error && <p className="ev-muted">Loading...</p>}
+      {!items && !error && <Skeleton />}
       {items && items.length === 0 && <p className="ev-muted">No bookings yet. <Link to="/events">Browse events</Link></p>}
 
       {items && items.map((b) => {

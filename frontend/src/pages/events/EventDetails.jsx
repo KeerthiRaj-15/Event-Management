@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import PageLayout from "../../components/PageLayout.jsx";
+import Skeleton from "../../components/Skeleton.jsx";
 import { useAuth } from "../../auth/AuthContext.jsx";
 import { getEvent, deleteEvent } from "../../api";
 import BookBox from "./BookBox.jsx";
 import { isPast } from "../../validation.js";
-import { money, fmtDate, fmtTime, canManage, seatsLeft } from "./helpers.js";
+import { money, fmtDate, fmtTime, canManage, seatsLeft, catClass, dayMon } from "./helpers.js";
 
 export default function EventDetails() {
   const { id } = useParams();
@@ -29,19 +30,24 @@ export default function EventDetails() {
   };
 
   if (error) return <PageLayout><p className="ev-error">{error}</p><Link to="/events">Back to events</Link></PageLayout>;
-  if (!event) return <PageLayout><p className="ev-muted">Loading...</p></PageLayout>;
+  if (!event) return <PageLayout><Skeleton /></PageLayout>;
   if (user.role === "Attendee" && event.status === "Draft")
     return <PageLayout><p className="ev-muted">This event is not available.</p><Link to="/events">Back to events</Link></PageLayout>;
 
   const left = seatsLeft(event);
   const ended = isPast(event);
   const manage = canManage(user, event);
+  const [day, mon] = dayMon(event.date);
+  const filled = event.capacity > 0 ? Math.min(100, Math.round((event.booked / event.capacity) * 100)) : 0;
 
   return (
     <PageLayout>
       <Link to="/events" className="ev-back">Back to events</Link>
       <div className="ev-detail">
         <div>
+          <div className={`ev-hero ${catClass(event.category)}`} aria-hidden="true">
+            <time className="ev-date" dateTime={event.date}><b>{day}</b><small>{mon}</small></time>
+          </div>
           <span className="ev-tag">{event.category}</span>{event.status === "Cancelled" ? <span className="chip bad" style={{ marginLeft: 8 }}>Cancelled</span> : ended && <span className="chip mute" style={{ marginLeft: 8 }}>Ended</span>}
           <h1>{event.title}</h1>
           {event.status === "Cancelled" && <p className="ev-error">This event was cancelled{event.cancelReason ? `: ${event.cancelReason}` : "."} Anyone who booked has been refunded.</p>}
@@ -56,6 +62,7 @@ export default function EventDetails() {
         <aside className="ev-side">
           <p className="ev-price">{money(event.price)}</p>
           <p className="ev-muted">{ended ? "This event has ended" : left > 0 ? `${left} seats left` : "Sold out"}</p>
+          <div className="progress" role="img" aria-label={`${filled}% of seats booked`}><i style={{ width: `${filled}%` }} /></div>
           <BookBox event={event} left={left} ended={ended} />
           {manage && (
             <div className="ev-manage">

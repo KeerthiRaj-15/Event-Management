@@ -73,3 +73,11 @@ Booking shape: `{ id, eventId, eventTitle, eventDate, eventTime, location, userE
 - Real-API mode (`VITE_USE_MOCK=false`): an HTTP 401 clears the session and returns to `/login`; a down server shows "Cannot reach the server"; 403 shows a permission message (`request()` in `src/api.js`).
 - `src/App.jsx` is the old standalone dashboard. Nothing imports it any more and it can be deleted.
 - Not included yet: real emails, partial refunds, waitlist.
+
+
+## Gather AI assistant
+
+A floating **Ask Gather AI** panel is available throughout authenticated pages. It needs the real backend:
+- Set `VITE_USE_MOCK=false` and `VITE_API_URL=http://localhost:5000/api` in `.env`.
+- Configure `OPENAI_API_KEY` (and optionally `TICKETMASTER_API_KEY`) in the backend `.env`.
+- Restart Vite and the backend, then sign in with a backend account.

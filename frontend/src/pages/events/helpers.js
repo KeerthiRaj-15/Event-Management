@@ -42,3 +42,12 @@ export function downloadCsv(filename, rows) {
 export const eventChip = (status) => (status === "Published" ? "ok" : status === "Cancelled" ? "bad" : "warn");
 export const bookingChip = (status) =>
   ({ CONFIRMED: ["ok", "Confirmed"], PENDING_PAYMENT: ["warn", "Pending payment"], CANCELLED: ["bad", "Cancelled"] }[status] || ["mute", status]);
+
+// Class for the gradient cover of an event card, e.g. "cat-workshop".
+export const catClass = (c = "") => "cat-" + String(c).toLowerCase().replace(/[^a-z]+/g, "-");
+
+// [day, "Mon"] for the date badge on event covers.
+export const dayMon = (d) => {
+  const x = new Date(d + "T00:00");
+  return [x.getDate(), x.toLocaleDateString("en-IN", { month: "short" })];
+};

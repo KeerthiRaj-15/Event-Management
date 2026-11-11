@@ -91,3 +91,36 @@ Errors are always `{ "message": "...", "code": "..." }`; a 401 makes the fronten
 - Config: trailing `/` in `CLIENT_URL` is stripped (it broke CORS matching and redirects).
 - CORS: in development any `localhost` / `127.0.0.1` port is accepted (Vite moving to 5174, or opening the site via 127.0.0.1, no longer breaks the app). Production still allows only `CLIENT_URL`.
 - Login of an unverified account now returns the dev code (`devOtp`, development only) so the verify page can show it.
+
+
+## 7. Gather AI assistant and online event discovery
+
+The authenticated workspace includes a floating **Ask Gather AI** chat. It calls `POST /api/ai/chat`; the server sends the question and published Gather events to OpenAI. The OpenAI key stays on the backend and must never be placed in a `VITE_*` frontend variable.
+
+Set these backend values in `backend/.env`:
+
+```env
+OPENAI_API_KEY=your_openai_api_key
+OPENAI_MODEL=gpt-6-luna
+```
+
+Optional online listings use the Ticketmaster Discovery API. Create an app/key in the [Ticketmaster Developer Portal](https://developer.ticketmaster.com/) and set:
+
+```env
+TICKETMASTER_API_KEY=your_ticketmaster_key
+TICKETMASTER_CITY=
+TICKETMASTER_COUNTRY_CODE=
+```
+
+When configured, the assistant also searches Ticketmaster for relevant listings. Those are third-party listings; they are not stored in Gather and cannot be booked through Gather. Ticketmaster coverage varies by country and market, so verify that it returns events for your target city. For cities/markets without useful coverage, choose a local event provider that offers an approved API/partner feed and add it as another backend adapter.
+
+In `frontend/.env`, use:
+
+```env
+VITE_USE_MOCK=false
+VITE_API_URL=http://localhost:5000/api
+```
+
+Restart both servers after changing environment files. Sign in using an account created through the real backend. Demo/mock accounts do not have valid backend JWTs and cannot use the AI endpoint.
+
+The assistant is rate-limited (10 requests per minute per client) and uses the same authenticated session as the rest of Gather.

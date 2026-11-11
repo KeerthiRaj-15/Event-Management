@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import PageLayout from "../../components/PageLayout.jsx";
+import CountUp from "../../components/CountUp.jsx";
+import Skeleton from "../../components/Skeleton.jsx";
 import { useAuth } from "../../auth/AuthContext.jsx";
 import { getEvent, listManagedBookings, listCheckIns, setEventStatus, deleteEvent, cancelEvent } from "../../api";
 import { isPast } from "../../validation.js";
@@ -42,7 +44,7 @@ export default function EventManage() {
   }, [bookings]);
 
   if (error) return <PageLayout><p className="ev-error">{error}</p><Link to="/my-events">Back to my events</Link></PageLayout>;
-  if (!event) return <PageLayout><p className="ev-muted">Loading...</p></PageLayout>;
+  if (!event) return <PageLayout><Skeleton /></PageLayout>;
   if (!canManage(user, event)) return <PageLayout><p className="ev-error">You can only manage your own events.</p><Link to="/events">Back to events</Link></PageLayout>;
 
   const past = isPast(event);
@@ -97,10 +99,10 @@ export default function EventManage() {
       {actErr && <p className="ev-error" role="alert">{actErr}</p>}
 
       <div className="ws-stats">
-        <div className="ws-stat"><p>Tickets sold</p><strong>{stats.tickets || event.booked}</strong><span>{seatsLeft(event)} seats left of {event.capacity}</span></div>
-        <div className="ws-stat"><p>Revenue</p><strong>{inr(stats.revenue)}</strong><span>{event.price === 0 ? "Free event" : `${money(event.price)} per ticket`}</span></div>
-        <div className="ws-stat"><p>Checked in</p><strong>{used.length}</strong><span>{inRate}% of sold tickets</span></div>
-        <div className="ws-stat"><p>{cancelled ? "Refunded" : "Pending payment"}</p><strong>{cancelled ? inr(stats.refunded) : stats.pending}</strong><span>{cancelled ? "Event cancelled" : "Not yet confirmed"}</span></div>
+        <div className="ws-stat"><p>Tickets sold</p><strong><CountUp>{stats.tickets || event.booked}</CountUp></strong><span>{seatsLeft(event)} seats left of {event.capacity}</span></div>
+        <div className="ws-stat"><p>Revenue</p><strong><CountUp>{inr(stats.revenue)}</CountUp></strong><span>{event.price === 0 ? "Free event" : `${money(event.price)} per ticket`}</span></div>
+        <div className="ws-stat"><p>Checked in</p><strong><CountUp>{used.length}</CountUp></strong><span>{inRate}% of sold tickets</span></div>
+        <div className="ws-stat"><p>{cancelled ? "Refunded" : "Pending payment"}</p><strong><CountUp>{cancelled ? inr(stats.refunded) : stats.pending}</CountUp></strong><span>{cancelled ? "Event cancelled" : "Not yet confirmed"}</span></div>
       </div>
 
       <div className="ws-grid2">

@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import PageLayout from "../../components/PageLayout.jsx";
+import Skeleton from "../../components/Skeleton.jsx";
 import { useAuth } from "../../auth/AuthContext.jsx";
 import { listUsers, updateUserAdmin, listManagedEvents, listManagedBookings, setEventStatus } from "../../api";
 import { isPast } from "../../validation.js";
@@ -35,7 +36,7 @@ export default function AdminDashboard() {
   const eventRows = events.filter((e) => `${e.title} ${e.organizerEmail}`.toLowerCase().includes(needle));
   const bookingRows = bookings.filter((b) => `${b.eventTitle} ${b.userEmail} ${b.userName || ""}`.toLowerCase().includes(needle));
 
-  if (!users && !error) return <PageLayout><p className="ev-muted">Loading...</p></PageLayout>;
+  if (!users && !error) return <PageLayout><Skeleton /></PageLayout>;
 
   return (
     <PageLayout>

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import PageLayout from "../../components/PageLayout.jsx";
+import Skeleton from "../../components/Skeleton.jsx";
 import { useAuth } from "../../auth/AuthContext.jsx";
 import { getBooking, startPayment, completePayment } from "../../api";
 import { money, fmtDate, fmtTime } from "./helpers.js";
@@ -33,7 +34,7 @@ export default function Checkout() {
     }
   };
 
-  if (!booking) return <PageLayout>{msg ? <p className="ev-error">{msg.text}</p> : <p className="ev-muted">Loading...</p>}<Link to="/events">Back to events</Link></PageLayout>;
+  if (!booking) return <PageLayout>{msg ? <p className="ev-error">{msg.text}</p> : <Skeleton />}<Link to="/events">Back to events</Link></PageLayout>;
 
   return (
     <PageLayout>

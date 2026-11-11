@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { register } from "../../api";
 import { validateProfile, validatePasswordChange } from "../../validation.js";
 import "./Registration.css";
+import AuthStage from "../../components/AuthStage.jsx";
 
 export default function Registration() {
   const navigate = useNavigate();
@@ -74,6 +75,7 @@ export default function Registration() {
 
   return (
     <div className="register-page">
+      <AuthStage />
       <div className="register-card">
 
         <div className="register-brand">

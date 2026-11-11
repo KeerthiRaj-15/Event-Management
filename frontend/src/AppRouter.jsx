@@ -23,10 +23,11 @@ const STAFF = ["Organizer", "Admin"];
 
 function Unauthorized() {
   return (
-    <div style={{ padding: 40, textAlign: "center" }}>
-      <h2>Access denied</h2>
+    <div className="state-page">
+      <span className="state-code" aria-hidden="true">403</span>
+      <h1>Access denied</h1>
       <p>Your account does not have permission to view this page.</p>
-      <Link to="/dashboard">Back to dashboard</Link>
+      <Link className="ev-btn" to="/dashboard">Back to dashboard</Link>
     </div>
   );
 }

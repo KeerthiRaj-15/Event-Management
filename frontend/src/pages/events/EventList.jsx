@@ -1,17 +1,19 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import PageLayout from "../../components/PageLayout.jsx";
+import Skeleton from "../../components/Skeleton.jsx";
 import { useAuth } from "../../auth/AuthContext.jsx";
 import { listEvents } from "../../api";
 import { isPast } from "../../validation.js";
-import { CATEGORIES, money, fmtDate, fmtTime, canManage, isStaff, seatsLeft } from "./helpers.js";
+import { CATEGORIES, money, fmtDate, fmtTime, canManage, isStaff, seatsLeft, catClass, dayMon } from "./helpers.js";
 
 export default function EventList() {
   const { user } = useAuth();
   const staff = isStaff(user);
   const [events, setEvents] = useState(null);
   const [error, setError] = useState("");
-  const [q, setQ] = useState("");
+  const [searchParams] = useSearchParams();
+  const [q, setQ] = useState(() => searchParams.get("search") || "");
   const [cat, setCat] = useState("All");
   const [when, setWhen] = useState("upcoming");
   const [price, setPrice] = useState("any");
@@ -26,7 +28,7 @@ export default function EventList() {
       (cat === "All" || e.category === cat) &&
       (when === "all" || (when === "past") === isPast(e)) &&
       (price === "any" || (price === "free") === (e.price === 0)) &&
-      `${e.title} ${e.location}`.toLowerCase().includes(q.trim().toLowerCase()))
+      `${e.title} ${e.category} ${e.location} ${e.description || ""}`.toLowerCase().includes(q.trim().toLowerCase()))
     .sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`) * (when === "past" ? -1 : 1));
 
   return (
@@ -52,24 +54,32 @@ export default function EventList() {
       </div>
 
       {error && <p className="ev-error">{error}</p>}
-      {!events && !error && <p className="ev-muted">Loading events...</p>}
+      {!events && !error && <Skeleton variant="cards" />}
       {events && visible.length === 0 && <p className="ev-muted">No events match your filters.</p>}
 
       <div className="ev-grid">
-        {visible.map((e) => {
+        {visible.map((e, i) => {
           const left = seatsLeft(e);
           const ended = isPast(e);
+          const [day, mon] = dayMon(e.date);
           return (
-            <article className={`ev-card ${ended ? "ev-ended" : ""}`} key={e.id}>
-              <div className="ev-row">
+            <article className={`ev-card ${ended ? "ev-ended" : ""}`} key={e.id} style={{ "--i": Math.min(i, 8) }}>
+              <div className={`ev-cover ${catClass(e.category)}`}>
                 <span className="ev-tag">{e.category}</span>
-                {e.status === "Cancelled" ? <span className="chip bad">Cancelled</span> : ended ? <span className="chip mute">Ended</span>
-                  : staff && <span className={`ev-status ${e.status.toLowerCase()}`}>{e.status}</span>}
+                <time className="ev-date" dateTime={e.date}><b>{day}</b><small>{mon}</small></time>
               </div>
-              <h3>{e.title}</h3>
-              <p className="ev-muted">{fmtDate(e.date)} at {fmtTime(e.time)}</p>
-              <p className="ev-muted">{e.location}</p>
-              <p className="ev-row"><strong>{money(e.price)}</strong><span className="ev-muted">{ended ? "Booking closed" : left > 0 ? `${left} seats left` : "Sold out"}</span></p>
+              <div className="ev-body">
+                {(e.status === "Cancelled" || ended || staff) && (
+                  <div className="ev-row">
+                    {e.status === "Cancelled" ? <span className="chip bad">Cancelled</span> : ended ? <span className="chip mute">Ended</span>
+                      : <span className={`ev-status ${e.status.toLowerCase()}`}>{e.status}</span>}
+                  </div>
+                )}
+                <h3>{e.title}</h3>
+                <p className="ev-muted">{fmtDate(e.date)} at {fmtTime(e.time)}</p>
+                <p className="ev-muted">{e.location}</p>
+                <p className="ev-row"><strong>{money(e.price)}</strong><span className="ev-muted">{ended ? "Booking closed" : left > 0 ? `${left} seats left` : "Sold out"}</span></p>
+              </div>
               <div className="ev-actions">
                 <Link className="ev-btn ghost" to={`/events/${e.id}`}>View details</Link>
                 {canManage(user, e) && <Link className="ev-btn ghost" to={`/events/${e.id}/edit`}>Edit</Link>}
