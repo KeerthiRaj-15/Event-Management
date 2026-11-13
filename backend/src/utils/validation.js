@@ -4,6 +4,7 @@ import { localDate, localTime, maxEventDate, isRealDate, eventStart, hoursUntil,
 export const MAX_PRICE = 100000;
 export const MAX_CAPACITY = 100000;
 export const MAX_QTY_PER_BOOKING = 5;
+export const MAX_TICKETS_PER_PERSON = 10; // paid + unpaid tickets one person may hold for a single event
 export const CATEGORIES = ["Conference", "Workshop", "Entertainment", "Networking", "Sports"];
 export const CANCEL_CUTOFF_HOURS = 24; // keep equal to Frontend/src/validation.js
 export const OTP_MINUTES = 10;

@@ -12,6 +12,7 @@ import paymentRoutes from "./routes/payments.js";
 import checkinRoutes from "./routes/checkins.js";
 import adminRoutes from "./routes/admin.js";
 import aiRoutes from "./routes/ai.js";
+import externalRoutes from "./routes/external.js";
 
 const app = express();
 if (config.trustProxy) app.set("trust proxy", 1); // set TRUST_PROXY=true behind Render/Nginx/etc. so rate limits see real client IPs
@@ -36,6 +37,7 @@ app.use("/api/payments", paymentRoutes);
 app.use("/api/checkins", checkinRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/api/external", externalRoutes);
 app.use(notFound);
 app.use(errorHandler);
 

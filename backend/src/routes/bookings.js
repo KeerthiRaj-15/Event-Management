@@ -5,7 +5,7 @@ import { Event } from "../models/Event.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
 import { AppError, wrap } from "../utils/http.js";
 import { isPast } from "../utils/time.js";
-import { MAX_QTY_PER_BOOKING, cancelCheck } from "../utils/validation.js";
+import { MAX_QTY_PER_BOOKING, MAX_TICKETS_PER_PERSON, cancelCheck } from "../utils/validation.js";
 import { confirmBooking, cancelBookingDoc, withUsedTickets } from "../services/bookings.js";
 
 const router = Router();
@@ -28,6 +28,12 @@ router.post("/", wrap(async (req, res) => {
   if (isPast(ev)) throw new AppError(400, "This event has already started or ended. Booking is closed.", "CLOSED");
   if (!Number.isInteger(qty) || qty < 1 || qty > MAX_QTY_PER_BOOKING) throw new AppError(400, `You can book 1 to ${MAX_QTY_PER_BOOKING} tickets at a time.`, "VALIDATION");
   if (ev.capacity - ev.booked < qty) throw new AppError(409, "Not enough seats left.", "SOLD_OUT");
+
+  // One person cannot hoard seats: at most MAX_TICKETS_PER_PERSON live tickets (paid or waiting) per event.
+  const held = await Booking.find({ userEmail: req.user.email, eventId: ev._id, status: { $in: ["PENDING_PAYMENT", "CONFIRMED"] } }, { quantity: 1 }).lean();
+  const have = held.reduce((s, b) => s + b.quantity, 0);
+  if (have + qty > MAX_TICKETS_PER_PERSON)
+    throw new AppError(400, `You can hold at most ${MAX_TICKETS_PER_PERSON} tickets for one event. You already have ${have}.`, "LIMIT");
 
   // Stop one person piling up unpaid bookings.
   if ((await Booking.countDocuments({ userEmail: req.user.email, status: "PENDING_PAYMENT" })) >= 10)

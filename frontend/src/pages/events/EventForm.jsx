@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import PageLayout from "../../components/PageLayout.jsx";
 import { useAuth } from "../../auth/AuthContext.jsx";
-import { getEvent, saveEvent } from "../../api";
+import { getEvent, saveEvent, describeEvent } from "../../api";
 import { CATEGORIES, canManage } from "./helpers.js";
 import { validateEvent, todayLocal, maxEventDate, MAX_PRICE, MAX_CAPACITY } from "../../validation.js";
 
@@ -20,6 +20,8 @@ export default function EventForm() {
   const [saving, setSaving] = useState(false);
   const [touched, setTouched] = useState({});
   const [submitted, setSubmitted] = useState(false);
+  const [aiBusy, setAiBusy] = useState(false);
+  const [aiNote, setAiNote] = useState("");
 
   useEffect(() => {
     if (!editing) return;
@@ -35,6 +37,25 @@ export default function EventForm() {
   const blur = (e) => setTouched((t) => ({ ...t, [e.target.name]: true }));
   const field = (name) => ({ name, value: form[name], onChange: set, onBlur: blur, "aria-invalid": Boolean(show(name)) });
   const Err = ({ name }) => (show(name) ? <small className="err" role="alert">{errors[name]}</small> : null);
+
+  // "Write with AI": needs the basics first. The result goes into the box for the organizer to edit; nothing is saved automatically.
+  const writeWithAi = async () => {
+    setAiNote("");
+    if (form.title.trim().length < 3 || !form.location.trim()) {
+      setTouched((t) => ({ ...t, title: true, location: true }));
+      return setAiNote("Fill in the event name and venue first, then try again.");
+    }
+    setAiBusy(true);
+    try {
+      const r = await describeEvent({ title: form.title.trim(), category: form.category, date: form.date, time: form.time, location: form.location.trim() });
+      setForm((p) => ({ ...p, description: r.text.slice(0, 500) }));
+      setAiNote(r.ai ? "Written by AI. Please read it and fix anything that is wrong before saving." : "Quick draft added (AI is not available right now). Please edit it.");
+    } catch (err) {
+      setAiNote(err.message || "Could not write a description. Please try again.");
+    } finally {
+      setAiBusy(false);
+    }
+  };
 
   const submit = async (e) => {
     e.preventDefault();
@@ -93,6 +114,10 @@ export default function EventForm() {
             <textarea {...field("description")} rows={4} maxLength={500} />
             <small className="hint">{form.description.length}/500</small>
           </label>
+          <div className="ai-row">
+            <button className="ws-btn" type="button" onClick={writeWithAi} disabled={aiBusy}>{aiBusy ? "Writing..." : "\u2728 Write with AI"}</button>
+            {aiNote && <small className="hint" role="status">{aiNote}</small>}
+          </div>
           <div className="ev-two">
             <label>Ticket price in rupees
               <input type="number" {...field("price")} min="0" max={MAX_PRICE} step="1" inputMode="numeric" required />

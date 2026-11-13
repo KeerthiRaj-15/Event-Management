@@ -21,6 +21,7 @@ export default function CheckIn() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [camera, setCamera] = useState(false);
+  const [override, setOverride] = useState(false);
   const input = useRef(null);
 
   useEffect(() => {
@@ -47,13 +48,13 @@ export default function CheckIn() {
     if (!value) return;
     setBusy(true); setResult(null);
     try {
-      const r = await checkIn(eventId, value, user);
+      const r = await checkIn(eventId, value, user, { override });
       setResult({ type: "ok", text: `Welcome, ${r.guest}. Ticket ${r.code} accepted.` });
       setCode("");
       navigator.vibrate?.(80);
       await refresh();
     } catch (err) {
-      setResult({ type: err.code === "USED" ? "warn" : "bad", text: err.message });
+      setResult({ type: err.code === "USED" || err.code === "NOT_TODAY" ? "warn" : "bad", text: err.message });
       navigator.vibrate?.([60, 40, 60]);
     } finally {
       setBusy(false);
@@ -81,7 +82,15 @@ export default function CheckIn() {
                 {events.map((e) => <option key={e.id} value={e.id}>{e.title} — {fmtDate(e.date)}</option>)}
               </select>
             </label>
-            {notToday && <p className="ev-warn">This event is on {fmtDate(event.date)}, not today. You can still check guests in.</p>}
+            {notToday && (
+              <div className="ev-warn">
+                This event is on {fmtDate(event.date)}, not today, so check-in is closed.
+                <label style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 6, fontWeight: 500 }}>
+                  <input type="checkbox" checked={override} onChange={(e) => setOverride(e.target.checked)} style={{ width: "auto" }} />
+                  Allow check-in on other days (for testing or early entry)
+                </label>
+              </div>
+            )}
             {camera ? (
               <QrScanner onDetect={admit} onClose={() => setCamera(false)} />
             ) : (

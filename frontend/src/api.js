@@ -2,7 +2,7 @@
 // MOCK mode (default) keeps users in localStorage so the UI works without a backend.
 // When the Node/MongoDB backend is ready, set VITE_USE_MOCK=false in .env and the same
 // functions call the REST endpoints listed in README.md ("Backend API contract").
-import { validateEvent, validateProfile, validatePasswordChange, isPast, cancelCheck, RESET_OTP_MINUTES } from "./validation.js";
+import { validateEvent, validateProfile, validatePasswordChange, isPast, cancelCheck, RESET_OTP_MINUTES, localDate } from "./validation.js";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 const MOCK = import.meta.env.VITE_USE_MOCK !== "false";
@@ -156,9 +156,53 @@ const token = () => { try { return JSON.parse(localStorage.getItem(SESSION_KEY))
 
 const authed = (method, path, body) => request(method, path, body, true);
 
-export async function chatWithAssistant(message) {
+// `history` = the last few chat turns [{ role: "user" | "assistant", text }] so follow-up questions make sense.
+export async function chatWithAssistant(message, history = []) {
   if (MOCK) throw fail("The AI assistant needs the real backend. Set VITE_USE_MOCK=false in frontend/.env, then sign in using a backend account.", "MOCK_MODE");
-  return authed("POST", "/ai/chat", { message });
+  return authed("POST", "/ai/chat", { message, history });
+}
+
+// "Write with AI" for the event form. Real mode: POST /ai/describe -> { text, ai }  (ai=false means a plain template was used).
+export async function describeEvent(fields) {
+  if (!MOCK) return authed("POST", "/ai/describe", fields);
+  await new Promise((r) => setTimeout(r, 400));
+  const when = fields.date ? ` on ${fields.date}${fields.time ? ` at ${fields.time}` : ""}` : "";
+  return { ai: false, text: `Join us for ${fields.title}, a ${String(fields.category).toLowerCase()} at ${fields.location}${when}. Come along, meet people and enjoy the day. Seats are limited, so book your ticket early.`.slice(0, 500) };
+}
+
+// Events from other websites (Discover page). Your backend calls the provider so the API key never reaches the browser.
+//   -> { events: [{ id, source, title, category, date, time, location, city, url, image, priceText }], hasMore }
+// Real mode: GET /external/events?q=&city=&from=&page=
+export async function listExternalEvents({ q = "", city = "", from = "", page = 0 } = {}) {
+  if (!MOCK) return authed("GET", `/external/events?${new URLSearchParams({ q, city, from, page: String(page) })}`);
+  await new Promise((r) => setTimeout(r, 250));
+  const needle = q.trim().toLowerCase();
+  const all = externalSample()
+    .filter((e) => (!city || e.city === city) && (!from || e.date >= from) && (!needle || `${e.title} ${e.location}`.toLowerCase().includes(needle)))
+    .sort((a, b) => a.date.localeCompare(b.date));
+  const size = 6;
+  return { events: all.slice(page * size, page * size + size), hasMore: all.length > (page + 1) * size, demo: true };
+}
+
+function externalSample() {
+  const rows = [
+    ["Bengaluru Tech Meetup", "Networking", 3, "18:30", "Indiranagar Social", "Bengaluru", "Free"],
+    ["Sunset Acoustic Night", "Entertainment", 4, "19:00", "Phoenix Marketcity", "Mumbai", "From \u20B9499"],
+    ["Photography Walk: Old Delhi", "Workshop", 5, "07:00", "Jama Masjid Gate 1", "Delhi", "\u20B9300"],
+    ["Startup Pitch Friday", "Conference", 6, "16:00", "T-Hub", "Hyderabad", "Free"],
+    ["Carnatic Fusion Concert", "Entertainment", 7, "18:00", "Music Academy", "Chennai", "From \u20B9600"],
+    ["Product Design Bootcamp", "Workshop", 9, "10:00", "WeWork Galaxy", "Bengaluru", "\u20B91,999"],
+    ["Stand-up Comedy Special", "Entertainment", 10, "20:00", "Canvas Laugh Club", "Mumbai", "From \u20B9399"],
+    ["Open Source Day", "Conference", 12, "09:30", "IIIT Hyderabad", "Hyderabad", "Free"],
+    ["Marathon for Clean Air", "Sports", 14, "05:30", "Lodhi Garden", "Delhi", "\u20B9250"],
+    ["Food Truck Festival", "Entertainment", 16, "12:00", "Marina Beach", "Chennai", "Free entry"],
+    ["Women in Tech Summit", "Conference", 18, "09:00", "Taj Yeshwantpur", "Bengaluru", "From \u20B9799"],
+    ["Jazz Under the Stars", "Entertainment", 21, "19:30", "NCPA Lawns", "Mumbai", "From \u20B9899"],
+  ];
+  return rows.map(([title, category, plus, time, location, city, priceText], i) => ({
+    id: `ext-${i + 1}`, source: "Sample feed", title, category, date: ymd(plus), time, location, city,
+    url: "https://example.com/events/" + (i + 1), image: "", priceText,
+  }));
 }
 
 
@@ -277,6 +321,8 @@ export async function createBooking(eventId, quantity, user) {
   const qty = Number(quantity);
   if (!Number.isInteger(qty) || qty < 1 || qty > 5) throw fail("You can book 1 to 5 tickets at a time.");
   if (ev.capacity - ev.booked < qty) throw fail("Not enough seats left.");
+  const have = bookings().filter((x) => x.userEmail === user.email && x.eventId === ev.id && (x.status === "CONFIRMED" || x.status === "PENDING_PAYMENT")).reduce((s, x) => s + x.quantity, 0);
+  if (have + qty > 10) throw fail(`You can hold at most 10 tickets for one event. You already have ${have}.`, "LIMIT");
   let b = {
     id: "B" + Date.now(), eventId: ev.id, eventTitle: ev.title, eventDate: ev.date, eventTime: ev.time,
     location: ev.location, userEmail: user.email, userName: user.name, quantity: qty, amount: ev.price * qty,
@@ -307,15 +353,16 @@ export async function getBooking(id, user) {
   return b;
 }
 
-// Real mode: backend creates the PayPal order and returns approvalUrl (see the payment module).
+// Real mode: backend creates the Razorpay order and returns { checkout: { keyId, orderId, amount, currency } }.
 export async function startPayment(id) {
   if (!MOCK) return authed("POST", "/payments/orders", { bookingId: id });
   return { mock: true };
 }
 
 // Mock sandbox result: "success" | "cancel" | "fail". Paying twice never charges twice.
-export async function completePayment(id, outcome, user) {
-  if (!MOCK) return authed("POST", "/payments/capture", { bookingId: id, outcome }); // outcome is only used by the backend's mock payment mode
+export async function completePayment(id, outcome, user, proof = {}) {
+  // proof = { razorpayPaymentId, razorpaySignature } from Razorpay Checkout. outcome is only used by the backend's mock payment mode.
+  if (!MOCK) return authed("POST", "/payments/capture", { bookingId: id, outcome, ...proof });
   const list = bookings();
   const b = list.find((x) => x.id === id && x.userEmail === user.email);
   if (!b) throw fail("Booking not found.");
@@ -393,13 +440,14 @@ export async function listCheckIns(eventId) {
 }
 
 // Real mode: POST /checkins { eventId, code }
-export async function checkIn(eventId, rawCode, user) {
-  if (!MOCK) return authed("POST", "/checkins", { eventId, code: rawCode });
+export async function checkIn(eventId, rawCode, user, { override = false } = {}) {
+  if (!MOCK) return authed("POST", "/checkins", { eventId, code: rawCode, override });
   const ev = events().find((e) => e.id === String(eventId));
   if (!ev) throw fail("Event not found.");
   if (!owns(user, ev)) throw fail("You can only check in guests for your own events.");
   const code = String(rawCode || "").trim().toUpperCase();
   if (!code) throw fail("Enter or scan a ticket code.");
+  if (ev.date !== localDate() && !override) throw fail(`Check-in is only open on the event day (${ev.date}). Turn on "Allow check-in on other days" to override.`, "NOT_TODAY");
   const any = bookings().find((b) => b.tickets.includes(code));
   if (any?.status === "CANCELLED") throw fail("This ticket was cancelled and refunded. Do not admit.", "CANCELLED");
   const booking = bookings().find((b) => b.status === "CONFIRMED" && b.tickets.includes(code));

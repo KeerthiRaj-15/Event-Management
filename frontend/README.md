@@ -28,6 +28,9 @@ Set `VITE_USE_MOCK=false` and `VITE_API_URL=http://localhost:5000/api` in `.env`
 | 12 | QR check-in | Done: **camera scanning** (BarcodeDetector, no extra package) plus typed code / USB scanner; one use per ticket | `/checkin`, `components/QrScanner.jsx` |
 | 13 | Admin dashboard | Done: users (role, deactivate), events, bookings | `/admin` |
 | 14 | Reports and analytics | Done: 7 / 30 / 90 day / all-time range, revenue and ticket trend (daily, weekly or monthly), average booking, attendance rate, per-event table, CSV export, print | `/reports` |
+| + | Discover online | Done: events from other websites (via your backend), search/city/date filters, links open on the source site | `/discover` |
+| + | Write with AI | Done: organizer button on the event form, result is editable and never saved automatically | `/events/new` |
+| + | AI assistant memory | Done: follow-up questions use the last 6 chat turns | chat widget |
 | + | Forgot / reset password | Done: email -> 6-digit code (10 min, 5 tries) -> new password | `/forgot-password` |
 | + | Booking cancellation + refund | Done: attendee, free until 24h before the event, full refund, seats released, ticket stops working | `/tickets` |
 | + | Event cancellation | Done: organizer cancels with a reason, every booking is refunded | `/events/:id/manage` |
@@ -57,8 +60,11 @@ All except auth need `Authorization: Bearer <token>`. **The backend must enforce
 | POST | `/auth/forgot-password` `{ email }`, `/auth/reset-password` `{ email, otp, newPassword }` | forgot always returns 200 (do not reveal whether the email exists); OTP expires in 10 min, max 5 tries |
 | POST | `/bookings/:id/cancel` | owner only; server re-checks the 24h cutoff and refunds through PayPal; sets `status: "CANCELLED"`, `refundAmount`, `refundId` |
 | POST | `/events/:id/cancel` `{ reason }` | Organizer/Admin; sets event `status: "Cancelled"`, cancels and refunds all bookings |
+| GET | `/external/events?q=&city=&from=&page=` | `{ events: [{ id, source, title, category, date, time, location, city, url, image, priceText }], hasMore }`; 503 `NOT_CONFIGURED` when no provider key |
+| POST | `/ai/describe` `{ title, category, date, time, location }` | `{ text, ai }` (Organizer/Admin) |
+| POST | `/ai/chat` `{ message, history }` | `{ reply, events, onlineEvents }` |
 | GET | `/events/:id/checkins` | `[{ code, at, by, eventId }]` |
-| POST | `/checkins` `{ eventId, code }` | error codes `INVALID`, `WRONG_EVENT`, `USED` |
+| POST | `/checkins` `{ eventId, code, override? }` | error codes `INVALID`, `WRONG_EVENT`, `USED`, `CANCELLED`, `NOT_TODAY` |
 | GET | `/admin/users` | Admin only |
 | PATCH | `/admin/users/:email` `{ role?, active? }` | Admin only |
 

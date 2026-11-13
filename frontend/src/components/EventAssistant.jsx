@@ -73,7 +73,9 @@ export default function EventAssistant() {
     setMessages((current) => [...current, { role: "user", text: message }]);
     setBusy(true);
     try {
-      const result = await chatWithAssistant(message);
+      // Send the last few turns (without the welcome text) so follow-up questions work.
+      const history = messages.slice(1).slice(-6).map((m) => ({ role: m.role, text: m.text }));
+      const result = await chatWithAssistant(message, history);
       const eventIntent = /\b(events?|concerts?|workshops?|conferences?|meetups?)\b|\b(browse|find|discover|search|show)\b.*\b(events?|concerts?|workshops?|conferences?|meetups?)\b|\b(upcoming|free) events\b/i.test(message);
       const events = eventIntent ? (result.events || []) : [];
       setMessages((current) => [...current, {

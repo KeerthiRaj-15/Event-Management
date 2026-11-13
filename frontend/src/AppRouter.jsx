@@ -9,6 +9,7 @@ import Dashboard from "./pages/dashboard/Dashboard.jsx";
 import AdminDashboard from "./pages/admin/AdminDashboard.jsx";
 import Reports from "./pages/reports/Reports.jsx";
 import CheckIn from "./pages/checkin/CheckIn.jsx";
+import Discover from "./pages/discover/Discover.jsx";
 import Profile from "./pages/profile/Profile.jsx";
 import EventList from "./pages/events/EventList.jsx";
 import EventDetails from "./pages/events/EventDetails.jsx";
@@ -45,6 +46,7 @@ export default function AppRouter() {
       <Route path="/admin" element={<ProtectedRoute roles={["Admin"]}><AdminDashboard /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
 
+      <Route path="/discover" element={<ProtectedRoute><Discover /></ProtectedRoute>} />
       <Route path="/events" element={<ProtectedRoute><EventList /></ProtectedRoute>} />
       <Route path="/events/new" element={<ProtectedRoute roles={STAFF}><EventForm /></ProtectedRoute>} />
       <Route path="/events/:id" element={<ProtectedRoute><EventDetails /></ProtectedRoute>} />

@@ -11,8 +11,8 @@ const schema = new mongoose.Schema(
     amount: { type: Number, required: true, min: 0 },
     status: { type: String, enum: ["PENDING_PAYMENT", "CONFIRMED", "CANCELLED"], default: "PENDING_PAYMENT", index: true },
     tickets: { type: [String], default: [] },
-    paymentId: String,        // PayPal capture id (or PAY-xxxx in mock mode); used for refunds
-    paypalOrderId: String,
+    paymentId: String,        // Razorpay payment id pay_xxx (or PAY-xxxx in mock mode); used for refunds
+    razorpayOrderId: String,
     processing: { type: Boolean, default: false }, // true while one request is confirming the booking (prevents double confirm)
     cancelledAt: Date, cancelledBy: String, cancelReason: String,
     refundAmount: Number, refundId: String,
@@ -27,7 +27,7 @@ schema.set("toJSON", {
   transform: (_doc, r) => {
     r.id = String(r._id);
     r.eventId = String(r.eventId);
-    delete r._id; delete r.__v; delete r.paypalOrderId; delete r.processing; delete r.updatedAt;
+    delete r._id; delete r.__v; delete r.razorpayOrderId; delete r.processing; delete r.updatedAt;
     return r;
   },
 });

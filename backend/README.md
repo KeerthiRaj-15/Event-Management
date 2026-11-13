@@ -55,7 +55,9 @@ Set `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM` (Gmail app p
 | Events | `GET /events`, `GET /events?mine=true`, `GET /events/:id`, `POST /events`, `PUT /events/:id`, `PATCH /events/:id/status`, `DELETE /events/:id`, `POST /events/:id/cancel`, `GET /events/:id/checkins` |
 | Bookings | `POST /bookings`, `GET /bookings/mine`, `GET /bookings`, `GET /bookings/:id`, `POST /bookings/:id/cancel` |
 | Payments | `POST /payments/orders`, `POST /payments/capture`, `GET /payments/paypal/return`, `GET /payments/paypal/cancel` |
-| Check-in | `POST /checkins` |
+| Check-in | `POST /checkins` `{ eventId, code, override? }` (400 `NOT_TODAY` outside the event day unless `override: true`) |
+| Online events | `GET /external/events?q=&city=&from=&page=` (Ticketmaster, cached 10 min, 30 requests/min per person) |
+| AI | `POST /ai/chat { message, history? }`, `POST /ai/describe { title, category, date?, time?, location }` (Organizer/Admin) |
 | Admin | `GET /admin/users`, `PATCH /admin/users/:email` |
 | Health | `GET /api/health` |
 
@@ -124,3 +126,17 @@ VITE_API_URL=http://localhost:5000/api
 Restart both servers after changing environment files. Sign in using an account created through the real backend. Demo/mock accounts do not have valid backend JWTs and cannot use the AI endpoint.
 
 The assistant is rate-limited (10 requests per minute per client) and uses the same authenticated session as the rest of Gather.
+
+## 10. Added in the latest round
+
+- **`GET /api/external/events`**: online events for the Discover page. Uses `TICKETMASTER_API_KEY` (plus optional `TICKETMASTER_CITY` / `TICKETMASTER_COUNTRY_CODE`). Results are cached for 10 minutes so many users share one provider call, and failures return a safe message (never the key). Without a key it answers 503 `NOT_CONFIGURED`.
+- **`POST /api/ai/describe`**: the "Write with AI" button on the event form. If `OPENAI_API_KEY` is missing or OpenAI fails, a plain template description is returned (`ai: false`) so the button never just breaks.
+- **Chat memory**: `POST /api/ai/chat` accepts `history` (last 6 turns, cleaned and capped) so follow-up questions work.
+- **AI rate limits are per person** (not per IP address).
+- **Check-in** is only open on the event day; staff can send `override: true`.
+- **Per-person limit**: at most 10 live tickets (paid + unpaid) per person per event.
+- **Tests**: `npm test` runs 12 tests (online events adapter, query cleaning, caching, error handling, the route with a fake login, chat history cleaning, description fallback). They need no database.
+
+## 11. Security: do this before you share or deploy
+
+`.env` holds your real MongoDB password, JWT secret, OpenAI key and Ticketmaster key. It is already in `.gitignore`, but a zip of the folder includes it. **Never zip, email, upload or commit `.env`.** If a zip containing it has been shared anywhere, rotate every secret in it: change the MongoDB user password, create a new OpenAI key and Ticketmaster key (delete the old ones), and set a new `JWT_SECRET` (this logs everyone out).

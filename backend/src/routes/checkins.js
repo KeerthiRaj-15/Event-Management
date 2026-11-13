@@ -5,12 +5,13 @@ import { Event } from "../models/Event.js";
 import { CheckIn } from "../models/CheckIn.js";
 import { requireAuth, requireRole, owns } from "../middleware/auth.js";
 import { AppError, wrap, str } from "../utils/http.js";
+import { localDate } from "../utils/time.js";
 
 const router = Router();
 router.use(requireAuth, requireRole("Organizer", "Admin"));
 
 // POST /checkins { eventId, code } -> { code, guest, at, by, eventId }
-// Errors the gate screen understands: INVALID, WRONG_EVENT, USED, CANCELLED.
+// Errors the gate screen understands: INVALID, WRONG_EVENT, USED, CANCELLED, NOT_TODAY.
 router.post("/", wrap(async (req, res) => {
   const { eventId } = req.body || {};
   if (!mongoose.isValidObjectId(eventId)) throw new AppError(404, "Event not found.", "NOT_FOUND");
@@ -20,6 +21,10 @@ router.post("/", wrap(async (req, res) => {
 
   const code = str(req.body?.code).toUpperCase();
   if (!code || code.length > 40) throw new AppError(400, "Enter or scan a ticket code.", "INVALID");
+
+  // Gates open only on the event day. Staff can override for early entry or testing ({ override: true }).
+  if (ev.date !== localDate() && req.body?.override !== true)
+    throw new AppError(400, `Check-in is only open on the event day (${ev.date}). Turn on "Allow check-in on other days" to override.`, "NOT_TODAY");
 
   const booking = await Booking.findOne({ tickets: code });
   if (booking?.status === "CANCELLED") throw new AppError(400, "This ticket was cancelled and refunded. Do not admit.", "CANCELLED");

@@ -156,3 +156,6 @@
   .page-in, .ev-card, .bar-fill, .spark i, .progress i { animation: none !important; }
   .ev-booking { break-inside: avoid; border: 1px solid #999; }
 }
+
+.disc-img{width:100%;height:140px;object-fit:cover;border-radius:8px;background:var(--line,#eff0f5)}
+.ai-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:6px}

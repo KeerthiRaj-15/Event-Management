@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, CalendarDays, Ticket, Plus, Search, QrCode, BarChart3,
-  ShieldCheck, UserCircle, LogOut, Menu, CalendarCheck, Moon, Sun,
+  ShieldCheck, UserCircle, LogOut, Menu, CalendarCheck, Moon, Sun, Globe,
 } from "lucide-react";
 import { useAuth } from "../auth/AuthContext.jsx";
 import { initials } from "../pages/events/helpers.js";
@@ -15,11 +15,12 @@ function navFor(role) {
   const profile = { to: "/profile", label: "My profile", icon: UserCircle };
   const browse = { to: "/events", label: "Browse events", icon: Search, end: true };
   const tickets = { to: "/tickets", label: "My tickets", icon: Ticket };
+  const discover = { to: "/discover", label: "Discover online", icon: Globe };
   if (role === "Admin")
     return [
       { to: "/admin", label: "Admin dashboard", icon: ShieldCheck },
       { to: "/my-events", label: "Manage events", icon: CalendarDays },
-      browse, tickets,
+      browse, discover, tickets,
       { to: "/checkin", label: "QR check-in", icon: QrCode },
       { to: "/reports", label: "Reports", icon: BarChart3 },
       profile,
@@ -29,19 +30,19 @@ function navFor(role) {
       { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
       { to: "/my-events", label: "My events", icon: CalendarDays },
       { to: "/events/new", label: "Create event", icon: Plus },
-      browse, tickets,
+      browse, discover, tickets,
       { to: "/checkin", label: "QR check-in", icon: QrCode },
       { to: "/reports", label: "Reports", icon: BarChart3 },
       profile,
     ];
-  return [{ to: "/dashboard", label: "Dashboard", icon: LayoutDashboard }, browse, tickets, profile];
+  return [{ to: "/dashboard", label: "Dashboard", icon: LayoutDashboard }, browse, discover, tickets, profile];
 }
 
 const CRUMBS = [
   [/^\/dashboard/, "Dashboard"], [/^\/admin/, "Admin dashboard"], [/^\/my-events/, "My events"],
   [/^\/events\/new/, "Create event"], [/^\/events\/[^/]+\/edit/, "Edit event"],
   [/^\/events\/[^/]+\/manage/, "Event workspace"], [/^\/events\/[^/]+/, "Event details"], [/^\/events/, "Browse events"],
-  [/^\/checkout/, "Checkout"], [/^\/tickets/, "My tickets"], [/^\/checkin/, "QR check-in"],
+  [/^\/discover/, "Discover online"], [/^\/checkout/, "Checkout"], [/^\/tickets/, "My tickets"], [/^\/checkin/, "QR check-in"],
   [/^\/reports/, "Reports"], [/^\/profile/, "My profile"],
 ];
 

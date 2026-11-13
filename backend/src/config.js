@@ -20,11 +20,10 @@ export const config = {
   // When true the API returns the OTP in its response (development only, so the frontend can display it).
   exposeDevOtp: flag(env.EXPOSE_DEV_OTP, !production && !env.SMTP_HOST),
   paymentMode: (env.PAYMENT_MODE || "mock").toLowerCase(),
-  paypal: {
-    env: (env.PAYPAL_ENV || "sandbox").toLowerCase(),
-    clientId: env.PAYPAL_CLIENT_ID,
-    secret: env.PAYPAL_CLIENT_SECRET,
-    currency: (env.PAYPAL_CURRENCY || "INR").toUpperCase(),
+  razorpay: {
+    keyId: env.RAZORPAY_KEY_ID,         // rzp_test_... for testing, rzp_live_... for real money
+    keySecret: env.RAZORPAY_KEY_SECRET, // server only. Never put this in the frontend.
+    currency: "INR",
   },
 };
 
@@ -34,8 +33,9 @@ export function assertConfig() {
   if (!config.mongoUri) problems.push("MONGO_URI is not set.");
   if (!config.jwtSecret || config.jwtSecret.length < 16) problems.push("JWT_SECRET must be set to a long random string (16+ characters).");
   if (!/^[+-]\d{2}:\d{2}$/.test(config.utcOffset)) problems.push('EVENT_UTC_OFFSET must look like "+05:30".');
-  if (!["mock", "paypal"].includes(config.paymentMode)) problems.push('PAYMENT_MODE must be "mock" or "paypal".');
-  if (config.paymentMode === "paypal" && (!config.paypal.clientId || !config.paypal.secret)) problems.push("PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET are required when PAYMENT_MODE=paypal.");
+  if (!["mock", "razorpay"].includes(config.paymentMode)) problems.push('PAYMENT_MODE must be "mock" or "razorpay".');
+  if (config.paymentMode === "razorpay" && (!config.razorpay.keyId || !config.razorpay.keySecret)) problems.push("RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET are required when PAYMENT_MODE=razorpay.");
+  if (config.production && config.paymentMode === "razorpay" && config.razorpay.keyId?.startsWith("rzp_test_")) problems.push("Use live Razorpay keys (rzp_live_...) in production.");
   if (config.production && config.paymentMode === "mock") problems.push("PAYMENT_MODE=mock is not allowed in production (it confirms bookings without taking money).");
   if (config.production && config.exposeDevOtp) problems.push("EXPOSE_DEV_OTP must be off in production (it would leak login codes).");
   if (problems.length) throw new Error("Configuration problems:\n - " + problems.join("\n - "));
