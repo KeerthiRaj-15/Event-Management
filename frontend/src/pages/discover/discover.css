@@ -1,0 +1,65 @@
+/* Discover page: filters, topic chips and aligned event cards. Reuses the shared .ev-card / .ev-cover / .ev-actions pieces. */
+
+/* filters: labelled fields on one grid so every box lines up */
+.disc-filters { display: grid; grid-template-columns: minmax(220px, 2fr) repeat(3, minmax(150px, 1fr)) auto; gap: 12px 14px; align-items: end; margin-bottom: 14px; }
+.disc-field { display: grid; gap: 6px; min-width: 0; }
+.disc-field > span { color: var(--muted); font-size: 13px; font-weight: 600; line-height: 1.2; }
+.disc-field input, .disc-field select { height: 42px; }
+.disc-clear { height: 42px; padding: 0 18px; }
+.disc-clear:disabled { opacity: 0.5; cursor: default; }
+
+/* category chips: one scrollable row on phones, wrapping on wide screens */
+.disc-topics { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 20px; }
+.disc-topics .rp-chip { flex: none; }
+
+.disc-count { margin-bottom: 14px; font-size: 14px; }
+
+/* cards: image or gradient cover, then text on one left edge, button pinned to the bottom */
+.disc-card { height: 100%; }
+.disc-cover { height: 132px; overflow: hidden; }
+.disc-cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.disc-cover::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(22, 19, 58, 0.45), rgba(22, 19, 58, 0) 55%); pointer-events: none; }
+.disc-cover > .ev-tag, .disc-cover > .ev-date { position: relative; z-index: 1; }
+.disc-body { flex: 1; display: flex; flex-direction: column; gap: 8px; padding-bottom: 0; }
+.disc-body h3 {
+  margin: 2px 0 2px;
+  min-height: 2.5em; /* two lines, so cards in a row stay the same height */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+.disc-line { display: flex; align-items: flex-start; gap: 8px; margin: 0; color: var(--muted); font-size: 14px; line-height: 1.4; }
+.disc-line span { min-width: 0; overflow-wrap: anywhere; }
+.disc-ico { flex: none; margin-top: 2px; color: var(--faint); }
+.disc-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: auto 0 0; padding-top: 8px; } /* auto top margin keeps the price row on one line across cards */
+.disc-foot strong { font: 700 16px var(--display); }
+.disc-card .ev-actions .ev-btn { width: 100%; }
+
+.disc-more { margin-top: 22px; text-align: center; }
+.disc-note { margin-top: 22px; font-size: 13px; }
+
+/* loading placeholders */
+.disc-skel { min-height: 300px; background: linear-gradient(100deg, var(--line-2) 30%, var(--surface) 50%, var(--line-2) 70%); background-size: 220% 100%; animation: disc-shimmer 1.4s linear infinite; }
+@keyframes disc-shimmer { to { background-position: -120% 0; } }
+@media (prefers-reduced-motion: reduce) { .disc-skel { animation: none; } }
+
+/* extra cover colours for the new categories */
+.cat-music { background: radial-gradient(circle at 88% 12%, rgba(255,255,255,.26), transparent 42%), linear-gradient(135deg, #3b1a6b, #a24bd8); }
+.cat-cricket { background: radial-gradient(circle at 88% 12%, rgba(255,255,255,.26), transparent 42%), linear-gradient(135deg, #0a5a3c, #2fb36b); }
+.cat-comedy { background: radial-gradient(circle at 88% 12%, rgba(255,255,255,.3), transparent 42%), linear-gradient(135deg, #8a4b00, #f2a516); }
+.cat-arts-theatre, .cat-theatre { background: radial-gradient(circle at 88% 12%, rgba(255,255,255,.26), transparent 42%), linear-gradient(135deg, #6b1230, #c93b5e); }
+.cat-film { background: radial-gradient(circle at 88% 12%, rgba(255,255,255,.22), transparent 42%), linear-gradient(135deg, #1b2440, #46557f); }
+.cat-family { background: radial-gradient(circle at 88% 12%, rgba(255,255,255,.3), transparent 42%), linear-gradient(135deg, #0b6a7a, #3cc4d4); }
+.cat-football, .cat-soccer { background: radial-gradient(circle at 88% 12%, rgba(255,255,255,.26), transparent 42%), linear-gradient(135deg, #0b4f8a, #3aa6ff); }
+
+@media (max-width: 900px) {
+  .disc-filters { grid-template-columns: 1fr 1fr; }
+  .disc-search { grid-column: 1 / -1; }
+  .disc-clear { grid-column: 1 / -1; width: 100%; }
+}
+@media (max-width: 560px) {
+  .disc-filters { grid-template-columns: 1fr; }
+  .disc-topics { flex-wrap: nowrap; overflow-x: auto; margin-inline: -4px; padding: 0 4px 6px; scrollbar-width: thin; }
+}

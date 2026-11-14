@@ -19,6 +19,7 @@ import MyEvents from "./pages/events/MyEvents.jsx";
 import Checkout from "./pages/events/Checkout.jsx";
 import MyTickets from "./pages/events/MyTickets.jsx";
 import ProtectedRoute from "./auth/ProtectedRoute.jsx";
+import LandingPage from "./pages/LandingPage.jsx";
 
 const STAFF = ["Organizer", "Admin"];
 
@@ -36,7 +37,7 @@ function Unauthorized() {
 export default function AppRouter() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/" element={<LandingPage />} />
       <Route path="/register" element={<Registration />} />
       <Route path="/login" element={<Login />} />
       <Route path="/verify-otp" element={<VerifyOtp />} />

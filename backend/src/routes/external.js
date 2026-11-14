@@ -2,7 +2,7 @@ import { Router } from "express";
 import rateLimit from "express-rate-limit";
 import { requireAuth } from "../middleware/auth.js";
 import { wrap } from "../utils/http.js";
-import { cleanQuery, searchTicketmaster } from "../services/external.js";
+import { cleanQuery, searchEvents } from "../services/external.js";
 
 // `auth` can be swapped in tests; the app always uses requireAuth.
 export function externalRouter(auth = requireAuth) {
@@ -15,9 +15,9 @@ export function externalRouter(auth = requireAuth) {
     message: { message: "Too many searches. Please wait a minute.", code: "RATE_LIMITED" },
   }));
 
-  // GET /external/events?q=&city=&from=YYYY-MM-DD&page=0 -> { events: [...], hasMore }
+  // GET /external/events?q=&city=&country=&topic=&from=YYYY-MM-DD&page=0 -> { events: [...], hasMore }
   router.get("/events", wrap(async (req, res) => {
-    res.json(await searchTicketmaster(cleanQuery(req.query)));
+    res.json(await searchEvents(cleanQuery(req.query)));
   }));
   return router;
 }

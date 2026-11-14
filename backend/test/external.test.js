@@ -8,7 +8,7 @@ import { errorHandler } from "../src/middleware/error.js";
 
 const sample = {
   id: "Z1", name: "Jazz Night", url: "https://www.ticketmaster.com/e/Z1",
-  dates: { start: { localDate: "2026-12-01", localTime: "19:30:00" } },
+  dates: { start: { localDate: "2099-12-01", localTime: "19:30:00" } },
   images: [{ url: "https://img/big.jpg", width: 1024 }, { url: "https://img/mid.jpg", width: 640 }, { url: "https://img/tiny.jpg", width: 100 }],
   classifications: [{ segment: { name: "Music" } }],
   priceRanges: [{ min: 500, max: 1500, currency: "INR" }],
@@ -19,13 +19,13 @@ const okFetch = (log = []) => async (url) => { log.push(new URL(url)); return { 
 
 test("normalizeTicketmaster maps fields and picks a mid-size image", () => {
   assert.deepEqual(normalizeTicketmaster(sample), {
-    id: "tm-Z1", source: "Ticketmaster", title: "Jazz Night", category: "Music", date: "2026-12-01", time: "19:30",
-    location: "NCPA", city: "Mumbai", url: "https://www.ticketmaster.com/e/Z1", image: "https://img/mid.jpg", priceText: "INR 500 - 1500",
+    id: "tm-Z1", source: "Ticketmaster", title: "Jazz Night", category: "Music", date: "2099-12-01", time: "19:30",
+    location: "NCPA", city: "Mumbai", country: "", genre: "", url: "https://www.ticketmaster.com/e/Z1", image: "https://img/mid.jpg", priceText: "INR 500 - 1500",
   });
 });
 
 test("normalizeTicketmaster survives missing optional fields", () => {
-  const n = normalizeTicketmaster({ id: "Z2", name: "X", dates: { start: { localDate: "2026-12-02" } } });
+  const n = normalizeTicketmaster({ id: "Z2", name: "X", dates: { start: { localDate: "2099-12-02" } } });
   assert.equal(n.priceText, "See site"); assert.equal(n.city, ""); assert.equal(n.time, ""); assert.equal(n.image, "");
 });
 
@@ -33,17 +33,42 @@ test("cleanQuery clamps and rejects bad input", () => {
   const q = cleanQuery({ q: "x".repeat(500), city: " Pune ", from: "not-a-date", page: "999" });
   assert.equal(q.q.length, 80); assert.equal(q.city, "Pune"); assert.equal(q.from, ""); assert.equal(q.page, 20);
   assert.equal(cleanQuery({ page: "-4" }).page, 0);
-  assert.equal(cleanQuery({ from: "2026-12-01" }).from, "2026-12-01");
+  assert.equal(cleanQuery({ from: "2099-12-01" }).from, "2099-12-01");
+});
+
+test("cleanQuery only lets known countries and topics through", () => {
+  assert.equal(cleanQuery({ country: " in " }).country, "IN");
+  assert.equal(cleanQuery({ country: "all" }).country, "ALL");
+  assert.equal(cleanQuery({ country: "ZZ" }).country, "");
+  assert.equal(cleanQuery({ country: "IN&x=1" }).country, "");
+  assert.equal(cleanQuery({ topic: "Cricket" }).topic, "Cricket");
+  assert.equal(cleanQuery({ topic: "Drop table" }).topic, "");
+  assert.equal(cleanQuery({ topic: ["Music"] }).topic, "");
+});
+
+test("country and topic are sent to the provider; ALL removes the country filter; they are part of the cache key", async () => {
+  clearExternalCache();
+  const log = [];
+  await searchTicketmaster({ q: "", city: "", country: "GB", topic: "Cricket", from: "2099-12-01", page: 0 }, okFetch(log), env);
+  assert.equal(log[0].searchParams.get("countryCode"), "GB");
+  assert.equal(log[0].searchParams.get("classificationName"), "Cricket");
+  await searchTicketmaster({ q: "", city: "", country: "ALL", topic: "Football", from: "2099-12-01", page: 0 }, okFetch(log), env);
+  assert.equal(log[1].searchParams.get("countryCode"), null);
+  assert.equal(log[1].searchParams.get("classificationName"), "Soccer");
+  await searchTicketmaster({ q: "", city: "", country: "", topic: "", from: "2099-12-01", page: 0 }, okFetch(log), env);
+  assert.equal(log[2].searchParams.get("countryCode"), "IN", "no country sent: the .env default applies");
+  assert.equal(log[2].searchParams.has("classificationName"), false);
+  assert.equal(log.length, 3, "different filters must not share one cached answer");
 });
 
 test("searchTicketmaster sends the right request, drops events without date/url, reports paging", async () => {
   clearExternalCache();
   const log = [];
-  const r = await searchTicketmaster({ q: "jazz", city: "Mumbai", from: "2026-12-01", page: 0 }, okFetch(log), env);
+  const r = await searchTicketmaster({ q: "jazz", city: "Mumbai", from: "2099-12-01", page: 0 }, okFetch(log), env);
   assert.equal(r.events.length, 1); assert.equal(r.hasMore, true);
   const p = log[0].searchParams;
   assert.equal(p.get("keyword"), "jazz"); assert.equal(p.get("city"), "Mumbai"); assert.equal(p.get("countryCode"), "IN");
-  assert.equal(p.get("startDateTime"), "2026-12-01T00:00:00Z"); assert.equal(p.get("apikey"), "k");
+  assert.equal(p.get("startDateTime"), "2099-12-01T00:00:00Z"); assert.equal(p.get("apikey"), "k");
   clearExternalCache();
   assert.equal((await searchTicketmaster({ q: "", city: "", from: "", page: 2 }, okFetch(), env)).hasMore, false);
 });
@@ -51,7 +76,7 @@ test("searchTicketmaster sends the right request, drops events without date/url,
 test("repeat searches are served from the cache (one provider call)", async () => {
   clearExternalCache();
   const log = [];
-  const q = { q: "cache", city: "", from: "2026-12-01", page: 0 };
+  const q = { q: "cache", city: "", from: "2099-12-01", page: 0 };
   await searchTicketmaster(q, okFetch(log), env); await searchTicketmaster(q, okFetch(log), env);
   assert.equal(log.length, 1, "second call must come from cache");
 });

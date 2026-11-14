@@ -1,0 +1,205 @@
+/* Site-wide motion: page, hover, tap, mobile drawer, and looping accents.
+   Honour prefers-reduced-motion in styles.css so this file stays additive. */
+
+:root {
+  --motion: 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  --motion-fast: 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes slide-in-left {
+  from { opacity: 0; transform: translateX(-18px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(18px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes pop-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.94); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes float-y {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+@keyframes pulse-ring {
+  0% { transform: scale(1); opacity: 0.55; }
+  70% { transform: scale(1.55); opacity: 0; }
+  100% { transform: scale(1.55); opacity: 0; }
+}
+@keyframes shimmer-bar {
+  from { transform: translateX(-120%); }
+  to { transform: translateX(220%); }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes bob {
+  0%, 100% { transform: rotate(-6deg) translateY(0); }
+  50% { transform: rotate(-6deg) translateY(-3px); }
+}
+
+/* Route change: stagger the first blocks on every page */
+.page-in > * {
+  animation: fade-up var(--motion) both;
+}
+.page-in > *:nth-child(1) { animation-delay: 0.02s; }
+.page-in > *:nth-child(2) { animation-delay: 0.07s; }
+.page-in > *:nth-child(3) { animation-delay: 0.12s; }
+.page-in > *:nth-child(4) { animation-delay: 0.17s; }
+.page-in > *:nth-child(5) { animation-delay: 0.22s; }
+.page-in > *:nth-child(6) { animation-delay: 0.27s; }
+.page-in > *:nth-child(n+7) { animation-delay: 0.32s; }
+
+.route-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  z-index: 40;
+  overflow: hidden;
+  pointer-events: none;
+  background: transparent;
+}
+.route-progress i {
+  display: block;
+  height: 100%;
+  width: 38%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--spot), var(--violet));
+  animation: shimmer-bar 0.7s var(--ease) both;
+}
+
+/* Brand mark + nav */
+.brand-mark { animation: bob 3.2s ease-in-out infinite; }
+.nav-link { transition: background 0.2s, color 0.2s, transform 0.2s var(--ease); }
+.nav-link:hover { transform: translateX(3px); }
+.nav-link:active { transform: translateX(1px) scale(0.99); }
+
+/* Cards, tiles, lists — hover on pointer devices, press on touch */
+.ws-stat,
+.ws-panel,
+.ev-booking,
+.ev-form,
+.ev-side {
+  transition: transform 0.25s var(--ease), box-shadow 0.25s var(--ease), border-color 0.2s;
+}
+.ws-stats .ws-stat { animation: fade-up var(--motion) both; }
+.ws-stats .ws-stat:nth-child(1) { animation-delay: 0.05s; }
+.ws-stats .ws-stat:nth-child(2) { animation-delay: 0.11s; }
+.ws-stats .ws-stat:nth-child(3) { animation-delay: 0.17s; }
+.ws-stats .ws-stat:nth-child(4) { animation-delay: 0.23s; }
+
+@media (hover: hover) and (pointer: fine) {
+  .ws-stat:hover,
+  .ws-panel:hover,
+  .ev-booking:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-2);
+  }
+  .ev-card:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-2);
+  }
+  .ev-card:hover .ev-cover img,
+  .ev-card:hover .disc-cover img {
+    transform: scale(1.08);
+  }
+  .ev-btn:hover { transform: translateY(-1px); }
+  .register-submit:hover { transform: translateY(-1px); }
+}
+
+.ev-card,
+.disc-card {
+  transition: transform 0.28s var(--ease), box-shadow 0.28s var(--ease), border-color 0.2s;
+}
+.ev-cover img,
+.disc-cover img {
+  transition: transform 0.55s var(--ease);
+}
+.ev-card:active,
+.ws-stat:active,
+.ws-panel:active {
+  transform: translateY(-2px) scale(0.995);
+}
+
+.ws-list li {
+  animation: fade-up 0.4s var(--ease) both;
+  animation-delay: calc(var(--i, 0) * 45ms);
+  transition: background 0.15s, transform 0.15s;
+}
+.ws-list li:active { transform: scale(0.99); }
+
+.chip, .rp-chip, .ws-tabs button {
+  transition: transform 0.15s var(--ease), background 0.18s, color 0.18s, border-color 0.18s, box-shadow 0.18s;
+}
+.chip:active, .rp-chip:active, .ws-tabs button:active { transform: scale(0.96); }
+
+/* Auth form entrance (stage already has its own ticket print) */
+.register-card {
+  animation: slide-in-right 0.55s var(--ease) both;
+}
+.auth-stage .auth-copy {
+  animation: slide-in-left 0.55s var(--ease) 0.08s both;
+}
+.auth-mark { animation: bob 3s ease-in-out infinite; }
+.register-submit { position: relative; overflow: hidden; }
+.register-submit:not(:disabled)::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 -40%;
+  width: 35%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.28), transparent);
+  animation: shimmer-bar 2.4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* Mobile drawer overlay fade */
+.mobile-scrim {
+  animation: fade-in 0.22s var(--ease) both;
+}
+
+/* Theme toggle + top avatar */
+.theme-toggle,
+.top-avatar,
+.profile-avatar {
+  transition: transform 0.2s var(--ease), border-color 0.15s, color 0.15s, background 0.15s;
+}
+.theme-toggle:active,
+.top-avatar:active,
+.mobile-menu:active { transform: scale(0.94); }
+.mobile-menu { transition: transform 0.15s var(--ease); }
+
+/* Empty states */
+.ws-empty { animation: fade-up 0.45s var(--ease) both; }
+.empty-icon, .ws-empty h3 { animation: pop-in 0.5s var(--ease) 0.08s both; }
+
+@media (max-width: 700px) {
+  .page-in > * { animation-duration: 0.38s; }
+  .gather-ai-launcher { animation: float-y 3.4s ease-in-out infinite; }
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.5s var(--ease), transform 0.5s var(--ease);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+.reveal.is-in { opacity: 1; transform: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity: 1; transform: none; transition: none; }
+}
+
+@media print {
+  .route-progress, .page-in > *, .ws-stat, .register-card, .auth-copy, .reveal { animation: none !important; }
+}

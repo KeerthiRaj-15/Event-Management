@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { register } from "../../api";
 import { validateProfile, validatePasswordChange } from "../../validation.js";
@@ -8,6 +8,56 @@ import AuthStage from "../../components/AuthStage.jsx";
 
 export default function Registration() {
   const navigate = useNavigate();
+  const cardRef = useRef(null);
+
+  useEffect(() => {
+    const card = cardRef.current;
+    const gsap = window.gsap;
+    if (!card || !gsap || window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return undefined;
+
+    card.classList.add("gsap-auth-ready");
+    const page = card.closest(".register-page");
+    const context = gsap.context(() => {
+      gsap.set(card, { transformPerspective: 1100, transformOrigin: "50% 45%" });
+      const timeline = gsap.timeline({ defaults: { ease: "power3.out" } });
+      timeline.fromTo(card,
+        { autoAlpha: 0, y: 42, rotateY: -9, rotateX: 4, scale: 0.97 },
+        { autoAlpha: 1, y: 0, rotateY: 0, rotateX: 0, scale: 1, duration: 0.72 }
+      );
+      timeline.fromTo(
+        card.querySelectorAll(".register-heading, .register-field, .register-terms, .register-submit, .register-login"),
+        { autoAlpha: 0, y: 18, rotateX: -5 },
+        { autoAlpha: 1, y: 0, rotateX: 0, duration: 0.42, stagger: 0.065 },
+        "-=0.32"
+      );
+      gsap.fromTo(".auth-copy > *",
+        { autoAlpha: 0, x: -24 },
+        { autoAlpha: 1, x: 0, duration: 0.65, stagger: 0.12, ease: "power3.out", delay: 0.12 }
+      );
+      gsap.fromTo(".auth-ticket",
+        { autoAlpha: 0, y: 38, rotateZ: -8, rotateY: 18 },
+        { autoAlpha: 1, y: 0, rotateZ: -2, rotateY: 0, duration: 0.8, ease: "back.out(1.35)", delay: 0.25 }
+      );
+    }, page);
+
+    const onPointerMove = (event) => {
+      if (window.matchMedia?.("(hover: none)").matches) return;
+      const rect = card.getBoundingClientRect();
+      const px = (event.clientX - rect.left) / rect.width - 0.5;
+      const py = (event.clientY - rect.top) / rect.height - 0.5;
+      gsap.to(card, { rotateY: px * 3.8, rotateX: py * -3.2, duration: 0.35, ease: "power2.out", overwrite: true });
+    };
+    const onPointerLeave = () => gsap.to(card, { rotateY: 0, rotateX: 0, duration: 0.55, ease: "elastic.out(1, 0.55)" });
+    card.addEventListener("pointermove", onPointerMove, { passive: true });
+    card.addEventListener("pointerleave", onPointerLeave);
+
+    return () => {
+      card.removeEventListener("pointermove", onPointerMove);
+      card.removeEventListener("pointerleave", onPointerLeave);
+      context.revert();
+      card.classList.remove("gsap-auth-ready");
+    };
+  }, []);
 
   const [form, setForm] = useState({
     name: "",
@@ -76,7 +126,7 @@ export default function Registration() {
   return (
     <div className="register-page">
       <AuthStage />
-      <div className="register-card">
+      <div className="register-card" ref={cardRef}>
 
         <div className="register-brand">
           <div className="register-logo">G</div>
