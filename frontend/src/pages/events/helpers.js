@@ -41,7 +41,7 @@ export function downloadCsv(filename, rows) {
 
 export const eventChip = (status) => (status === "Published" ? "ok" : status === "Cancelled" ? "bad" : "warn");
 export const bookingChip = (status) =>
-  ({ CONFIRMED: ["ok", "Confirmed"], PENDING_PAYMENT: ["warn", "Pending payment"], CANCELLED: ["bad", "Cancelled"] }[status] || ["mute", status]);
+  ({ CONFIRMED: ["ok", "Confirmed"], PENDING_PAYMENT: ["warn", "Pending payment"], CANCELLED: ["bad", "Cancelled"], EXPIRED: ["mute", "Hold expired"] }[status] || ["mute", status]);
 
 // Class for the gradient cover of an event card, e.g. "cat-workshop".
 export const catClass = (c = "") => "cat-" + String(c).toLowerCase().replace(/[^a-z]+/g, "-");

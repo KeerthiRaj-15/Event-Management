@@ -78,7 +78,7 @@ export default function MyTickets() {
 
             {b.status !== "CANCELLED" && (
               <div className="ws-actions no-print" style={{ marginTop: 12 }}>
-                {b.status === "PENDING_PAYMENT" && <Link className="ev-btn" to={`/checkout/${b.id}`}>Complete payment</Link>}
+                {(b.status === "PENDING_PAYMENT" || b.status === "EXPIRED") && <Link className="ev-btn" to={`/checkout/${b.id}`}>{b.status === "EXPIRED" ? "Hold expired: pay to re-reserve" : "Complete payment"}</Link>}
                 <button className="ws-btn danger" type="button" disabled={!chk.ok || busy === b.id} onClick={() => cancel(b)}>
                   {busy === b.id ? "Cancelling..." : b.status === "CONFIRMED" ? "Cancel and refund" : "Cancel booking"}
                 </button>

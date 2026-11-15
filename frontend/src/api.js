@@ -172,13 +172,13 @@ export async function describeEvent(fields) {
 
 // Events from other websites (Discover page). Your backend calls the provider so the API key never reaches the browser.
 //   -> { events: [{ id, source, title, category, date, time, location, city, url, image, priceText }], hasMore }
-// Real mode: GET /external/events?q=&city=&from=&page=
-export async function listExternalEvents({ q = "", city = "", from = "", page = 0 } = {}) {
-  if (!MOCK) return authed("GET", `/external/events?${new URLSearchParams({ q, city, from, page: String(page) })}`);
+// Real mode: GET /external/events?q=&city=&country=&topic=&from=&page=
+export async function listExternalEvents({ q = "", city = "", country = "", topic = "", from = "", page = 0 } = {}) {
+  if (!MOCK) return authed("GET", `/external/events?${new URLSearchParams({ q, city, country, topic, from, page: String(page) })}`);
   await new Promise((r) => setTimeout(r, 250));
   const needle = q.trim().toLowerCase();
   const all = externalSample()
-    .filter((e) => (!city || e.city === city) && (!from || e.date >= from) && (!needle || `${e.title} ${e.location}`.toLowerCase().includes(needle)))
+    .filter((e) => (!city || e.city === city) && (!country || e.country === country) && (!topic || e.category === topic) && (!from || e.date >= from) && (!needle || `${e.title} ${e.location}`.toLowerCase().includes(needle)))
     .sort((a, b) => a.date.localeCompare(b.date));
   const size = 6;
   return { events: all.slice(page * size, page * size + size), hasMore: all.length > (page + 1) * size, demo: true };
@@ -186,21 +186,21 @@ export async function listExternalEvents({ q = "", city = "", from = "", page = 
 
 function externalSample() {
   const rows = [
-    ["Bengaluru Tech Meetup", "Networking", 3, "18:30", "Indiranagar Social", "Bengaluru", "Free"],
-    ["Sunset Acoustic Night", "Entertainment", 4, "19:00", "Phoenix Marketcity", "Mumbai", "From \u20B9499"],
-    ["Photography Walk: Old Delhi", "Workshop", 5, "07:00", "Jama Masjid Gate 1", "Delhi", "\u20B9300"],
-    ["Startup Pitch Friday", "Conference", 6, "16:00", "T-Hub", "Hyderabad", "Free"],
-    ["Carnatic Fusion Concert", "Entertainment", 7, "18:00", "Music Academy", "Chennai", "From \u20B9600"],
-    ["Product Design Bootcamp", "Workshop", 9, "10:00", "WeWork Galaxy", "Bengaluru", "\u20B91,999"],
-    ["Stand-up Comedy Special", "Entertainment", 10, "20:00", "Canvas Laugh Club", "Mumbai", "From \u20B9399"],
-    ["Open Source Day", "Conference", 12, "09:30", "IIIT Hyderabad", "Hyderabad", "Free"],
-    ["Marathon for Clean Air", "Sports", 14, "05:30", "Lodhi Garden", "Delhi", "\u20B9250"],
-    ["Food Truck Festival", "Entertainment", 16, "12:00", "Marina Beach", "Chennai", "Free entry"],
-    ["Women in Tech Summit", "Conference", 18, "09:00", "Taj Yeshwantpur", "Bengaluru", "From \u20B9799"],
-    ["Jazz Under the Stars", "Entertainment", 21, "19:30", "NCPA Lawns", "Mumbai", "From \u20B9899"],
+    ["Bengaluru Tech Meetup", "Networking", "IN", 3, "18:30", "Indiranagar Social", "Bengaluru", "Free"],
+    ["Sunset Acoustic Night", "Entertainment", "IN", 4, "19:00", "Phoenix Marketcity", "Mumbai", "From ₹499"],
+    ["Photography Walk: Old Delhi", "Workshop", "IN", 5, "07:00", "Jama Masjid Gate 1", "Delhi", "₹300"],
+    ["Startup Pitch Friday", "Conference", "IN", 6, "16:00", "T-Hub", "Hyderabad", "Free"],
+    ["Carnatic Fusion Concert", "Entertainment", "IN", 7, "18:00", "Music Academy", "Chennai", "From ₹600"],
+    ["Product Design Bootcamp", "Workshop", "IN", 9, "10:00", "WeWork Galaxy", "Bengaluru", "₹1,999"],
+    ["Stand-up Comedy Special", "Entertainment", "IN", 10, "20:00", "Canvas Laugh Club", "Mumbai", "From ₹399"],
+    ["Open Source Day", "Conference", "IN", 12, "09:30", "IIIT Hyderabad", "Hyderabad", "Free"],
+    ["Marathon for Clean Air", "Sports", "IN", 14, "05:30", "Lodhi Garden", "Delhi", "₹250"],
+    ["Food Truck Festival", "Entertainment", "IN", 16, "12:00", "Marina Beach", "Chennai", "Free entry"],
+    ["Women in Tech Summit", "Conference", "IN", 18, "09:00", "Taj Yeshwantpur", "Bengaluru", "From ₹799"],
+    ["Jazz Under the Stars", "Entertainment", "IN", 21, "19:30", "NCPA Lawns", "Mumbai", "From ₹899"],
   ];
-  return rows.map(([title, category, plus, time, location, city, priceText], i) => ({
-    id: `ext-${i + 1}`, source: "Sample feed", title, category, date: ymd(plus), time, location, city,
+  return rows.map(([title, category, country, plus, time, location, city, priceText], i) => ({
+    id: `ext-${i + 1}`, source: "Sample feed", title, category, country, date: ymd(plus), time, location, city,
     url: "https://example.com/events/" + (i + 1), image: "", priceText,
   }));
 }
@@ -290,8 +290,8 @@ export async function setEventStatus(id, status, user) {
 export async function deleteEvent(id, user) {
   if (!MOCK) return authed("DELETE", `/events/${id}`);
   const ev = events().find((e) => e.id === String(id));
-  if (!ev) throw fail("Event not found.");
-  if (user && !owns(user, ev)) throw fail("You can only delete your own events.");
+  if (!ev) throw fail("Event not found.")
+  if (user && !owns(user, ev)) throw fail("You can only delete your own events.")
   const hasBookings = ev.booked > 0 || bookings().some((b) => b.eventId === ev.id);
   if (hasBookings) throw fail("This event already has bookings, so it cannot be deleted. Cancel the event instead (everyone is refunded) or move it to Draft.", "HAS_BOOKINGS");
   write(EVENTS_KEY, events().filter((e) => e.id !== String(id)));
@@ -410,7 +410,7 @@ export async function cancelEvent(id, reason, user) {
   const ev = events().find((e) => e.id === String(id));
   if (!ev) throw fail("Event not found.");
   if (!owns(user, ev)) throw fail("You can only cancel your own events.");
-  if (ev.status === "Cancelled") throw fail("This event is already cancelled.");
+  if (ev.status === "Cancelled") throw fail("This event is already cancelled.")
   if (isPast(ev)) throw fail("This event has already started, so it cannot be cancelled.");
   const why = String(reason || "").trim();
   if (why.length < 5) throw fail("Give attendees a reason (at least 5 characters).");
@@ -443,18 +443,18 @@ export async function listCheckIns(eventId) {
 export async function checkIn(eventId, rawCode, user, { override = false } = {}) {
   if (!MOCK) return authed("POST", "/checkins", { eventId, code: rawCode, override });
   const ev = events().find((e) => e.id === String(eventId));
-  if (!ev) throw fail("Event not found.");
-  if (!owns(user, ev)) throw fail("You can only check in guests for your own events.");
+  if (!ev) throw fail("Event not found.")
+  if (!owns(user, ev)) throw fail("You can only check in guests for your own events.")
   const code = String(rawCode || "").trim().toUpperCase();
-  if (!code) throw fail("Enter or scan a ticket code.");
-  if (ev.date !== localDate() && !override) throw fail(`Check-in is only open on the event day (${ev.date}). Turn on "Allow check-in on other days" to override.`, "NOT_TODAY");
+  if (!code) throw fail("Enter or scan a ticket code.")
+  if (ev.date !== localDate() && !override) throw fail(`Check-in is only open on the event day (${ev.date}). Turn on "Allow check-in on other days" to override.`, "NOT_TODAY")
   const any = bookings().find((b) => b.tickets.includes(code));
-  if (any?.status === "CANCELLED") throw fail("This ticket was cancelled and refunded. Do not admit.", "CANCELLED");
+  if (any?.status === "CANCELLED") throw fail("This ticket was cancelled and refunded. Do not admit.", "CANCELLED")
   const booking = bookings().find((b) => b.status === "CONFIRMED" && b.tickets.includes(code));
-  if (!booking) throw fail("Invalid ticket. This code does not exist or was never paid for.", "INVALID");
-  if (booking.eventId !== ev.id) throw fail(`Wrong event. This ticket is for "${booking.eventTitle}".`, "WRONG_EVENT");
+  if (!booking) throw fail("Invalid ticket. This code does not exist or was never paid for.", "INVALID")
+  if (booking.eventId !== ev.id) throw fail(`Wrong event. This ticket is for "${booking.eventTitle}".`, "WRONG_EVENT")
   const used = checkins()[code];
-  if (used) throw fail(`Already used at ${new Date(used.at).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" })}.`, "USED");
+  if (used) throw fail(`Already used at ${new Date(used.at).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" })}.`, "USED")
   const entry = { at: new Date().toISOString(), by: user.email, eventId: ev.id };
   write(CHECKIN_KEY, { ...checkins(), [code]: entry });
   return { code, guest: booking.userName || booking.userEmail, ...entry };
@@ -469,14 +469,14 @@ export async function listUsers() {
 
 export async function updateUserAdmin(email, patch, admin) {
   if (!MOCK) return authed("PATCH", `/admin/users/${encodeURIComponent(email)}`, patch);
-  if (admin.role !== "Admin") throw fail("Admins only.");
-  if (email === admin.email) throw fail("You cannot change your own role or status.");
+  if (admin.role !== "Admin") throw fail("Admins only.")
+  if (email === admin.email) throw fail("You cannot change your own role or status.")
   const list = users();
   const target = list.find((u) => u.email === email);
-  if (!target) throw fail("User not found.");
+  if (!target) throw fail("User not found.")
   const next = { ...target };
   if (patch.role) {
-    if (!["Attendee", "Organizer", "Admin"].includes(patch.role)) throw fail("Unknown role.");
+    if (!["Attendee", "Organizer", "Admin"].includes(patch.role)) throw fail("Unknown role.")
     next.role = patch.role;
   }
   if (typeof patch.active === "boolean") next.active = patch.active;

@@ -109,7 +109,7 @@ export const hoursUntil = (ev) => (eventStart(ev).getTime() - Date.now()) / 36e5
 // Returns { ok, reason } for an attendee cancelling a booking. `booking` needs eventDate/eventTime/status.
 export function cancelCheck(booking) {
   if (booking.status === "CANCELLED") return { ok: false, reason: "Already cancelled." };
-  if (booking.status === "PENDING_PAYMENT") return { ok: true, reason: "" };
+  if (booking.status === "PENDING_PAYMENT" || booking.status === "EXPIRED") return { ok: true, reason: "" }; // unpaid: nothing to refund
   if ((booking.usedTickets || []).length > 0) return { ok: false, reason: "Some tickets were already used at the gate." };
   const h = hoursUntil({ date: booking.eventDate, time: booking.eventTime });
   if (h < 0) return { ok: false, reason: "This event has already started." };

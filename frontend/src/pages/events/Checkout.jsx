@@ -29,9 +29,19 @@ export default function Checkout() {
 
   useEffect(() => {
     getBooking(bookingId, user)
-      .then((b) => (b.status !== "PENDING_PAYMENT" ? navigate("/tickets", { replace: true }) : setBooking(b)))
+      .then((b) => (b.status !== "PENDING_PAYMENT" && b.status !== "EXPIRED" ? navigate("/tickets", { replace: true }) : setBooking(b)))
       .catch((e) => setMsg({ type: "error", text: e.message }));
   }, [bookingId, user, navigate]);
+
+  // Unpaid seats are reserved for a limited time (the server frees them afterwards). Opening checkout extends the hold.
+  const [secondsLeft, setSecondsLeft] = useState(null);
+  useEffect(() => {
+    if (!booking?.holdExpiresAt || booking.status !== "PENDING_PAYMENT") { setSecondsLeft(null); return undefined; }
+    const tick = () => setSecondsLeft(Math.max(0, Math.round((new Date(booking.holdExpiresAt).getTime() - Date.now()) / 1000)));
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [booking]);
 
   const done = () => navigate("/tickets", { replace: true, state: { message: "Payment successful. Your tickets are ready." } });
 
@@ -88,6 +98,12 @@ export default function Checkout() {
           <p className="ev-muted">{booking.location}</p>
           <p>{booking.quantity} ticket(s)</p>
           <p className="ev-price">{money(booking.amount)}</p>
+          {booking.status === "EXPIRED" && <p className="ev-warn">Your seat hold ran out. Press pay and we will try to reserve the seats again.</p>}
+          {secondsLeft !== null && (
+            <p className={secondsLeft === 0 ? "ev-warn" : "ev-muted"} role="timer">
+              {secondsLeft === 0 ? "Hold ended. Paying will try to re-reserve your seats." : `Seats held for ${Math.floor(secondsLeft / 60)}:${String(secondsLeft % 60).padStart(2, "0")}`}
+            </p>
+          )}
         </section>
         <section className="ev-side">
           <h3>Pay securely</h3>
