@@ -23,6 +23,7 @@ export const config = {
   razorpay: {
     keyId: env.RAZORPAY_KEY_ID,         // rzp_test_... for testing, rzp_live_... for real money
     keySecret: env.RAZORPAY_KEY_SECRET, // server only. Never put this in the frontend.
+    webhookSecret: env.RAZORPAY_WEBHOOK_SECRET, // separate from the Razorpay API key secret
     currency: "INR",
   },
 };

@@ -9,6 +9,7 @@ import userRoutes from "./routes/users.js";
 import eventRoutes from "./routes/events.js";
 import bookingRoutes from "./routes/bookings.js";
 import paymentRoutes from "./routes/payments.js";
+import razorpayWebhookRoutes from "./routes/razorpayWebhook.js";
 import checkinRoutes from "./routes/checkins.js";
 import adminRoutes from "./routes/admin.js";
 import aiRoutes from "./routes/ai.js";
@@ -23,6 +24,8 @@ app.use(helmet());
 const allowedOrigins = new Set(config.clientUrls);
 const localDev = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
 app.use(cors({ origin: (origin, cb) => cb(null, !origin || allowedOrigins.has(origin) || (!config.production && localDev.test(origin))) }));
+// Razorpay signs the exact raw request bytes. Mount this BEFORE express.json().
+app.use("/api/payments", razorpayWebhookRoutes);
 app.use(express.json({ limit: "100kb" }));
 app.use("/api", rateLimit({ windowMs: 60 * 1000, limit: 300, standardHeaders: true, legacyHeaders: false,
   message: { message: "Too many requests. Please slow down.", code: "RATE_LIMITED" } }));

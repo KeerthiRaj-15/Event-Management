@@ -16,6 +16,7 @@ const schema = new mongoose.Schema(
     processing: { type: Boolean, default: false }, // true while one request is confirming the booking (prevents double confirm)
     cancelledAt: Date, cancelledBy: String, cancelReason: String,
     refundAmount: Number, refundId: String,
+    lastPaymentFailureAt: Date, lastPaymentFailureReason: String,
   },
   { timestamps: true }
 );
