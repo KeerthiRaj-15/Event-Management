@@ -93,3 +93,13 @@ If the browser closes after paying, Razorpay tells the backend directly (webhook
         ▼
   Let the guest in, and record it
 ```
+
+
+
+
+
+
+
+
+
+
